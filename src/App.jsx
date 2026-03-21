@@ -145,7 +145,7 @@ const CSS_GLOBAL = `
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   ::-webkit-scrollbar { display: none; }
-  html, body { margin: 0; padding: 0; overscroll-behavior: none; }
+  html, body { margin: 0; padding: 0; overscroll-behavior: none; background: #F8FAFC; }
   input, textarea, select, button { font-family: 'Nunito', -apple-system, sans-serif; font-size: 16px; }
 `;
 
@@ -302,12 +302,12 @@ function GoalForm({ goal, onSave, onClose }) {
   return (
     <>
       <input value={f.title} onChange={(e) => u("title", e.target.value)} placeholder="Название цели"
-        style={{ width: "100%", fontSize: 20, fontWeight: 800, border: "none", padding: "8px 0", background: "transparent", outline: "none", color: "#0F172A" }} />
+        style={{ width: "100%", fontSize: 20, fontWeight: 800, border: "none", padding: "6px 0", background: "transparent", outline: "none", color: "#0F172A" }} />
       <textarea value={f.desc} onChange={(e) => u("desc", e.target.value)} placeholder="Описание"
-        style={{ width: "100%", minHeight: 40, resize: "none", border: "none", padding: "4px 0", background: "transparent", fontSize: 14, color: "#94A3B8", outline: "none" }} />
+        style={{ width: "100%", minHeight: 36, resize: "none", border: "none", padding: "4px 0", background: "transparent", fontSize: 14, color: "#94A3B8", outline: "none", marginBottom: 12 }} />
 
       <label style={S.lbl}>Категория</label>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 12 }}>
         {CATS.map((c) => (
           <button key={c.id} onClick={() => u("cat", c.id)} style={{
             padding: "10px 8px", borderRadius: 14,
@@ -321,7 +321,7 @@ function GoalForm({ goal, onSave, onClose }) {
       </div>
 
       <label style={S.lbl}>Приоритет</label>
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
         {Object.entries(PRIO).map(([k, v]) => (
           <button key={k} onClick={() => u("prio", k)} style={{
             flex: 1, padding: "11px 0", borderRadius: 14,
@@ -333,7 +333,7 @@ function GoalForm({ goal, onSave, onClose }) {
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
         <div>
           <label style={S.lbl}>Дедлайн 📅</label>
           <input type="date" value={f.deadline} onChange={(e) => u("deadline", e.target.value)} style={S.field} />
@@ -1358,7 +1358,7 @@ export default function App() {
 
   // Main screen
   return (
-    <div style={{ fontFamily: "'Nunito', -apple-system, sans-serif", background: "#F8FAFC", minHeight: "100vh", maxWidth: 430, margin: "0 auto", paddingBottom: "calc(env(safe-area-inset-bottom, 16px) + 70px)", color: "#0F172A" }}>
+    <div style={{ fontFamily: "'Nunito', -apple-system, sans-serif", background: "#F8FAFC", minHeight: "100vh", maxWidth: 430, margin: "0 auto", paddingBottom: 80, color: "#0F172A" }}>
       <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
       <style>{CSS_GLOBAL}</style>
       <Confetti active={confetti} />
@@ -1424,10 +1424,10 @@ export default function App() {
       {/* Bottom Nav */}
       <div style={{
         position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
-        width: "100%", maxWidth: 430, background: "rgba(255,255,255,0.95)",
-        backdropFilter: "blur(20px)", borderTop: "1px solid #F1F5F9",
+        width: "100%", maxWidth: 430, background: "#ffffff",
+        borderTop: "1px solid #F1F5F9",
         display: "flex", justifyContent: "space-around",
-        padding: "10px 0 env(safe-area-inset-bottom, 0px)", zIndex: 100,
+        paddingTop: 8, paddingBottom: "max(env(safe-area-inset-bottom), 8px)", zIndex: 100,
       }}>
         {tabs.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
