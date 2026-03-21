@@ -130,7 +130,7 @@ async function loadData() {
 const S = {
   field: {
     width: "100%", padding: "12px 14px", borderRadius: 14, border: "1.5px solid #E2E8F0",
-    fontSize: 14, outline: "none", background: "#fff", color: "#0F172A", boxSizing: "border-box",
+    fontSize: 16, outline: "none", background: "#fff", color: "#0F172A", boxSizing: "border-box",
   },
   lbl: {
     display: "block", fontSize: 12, fontWeight: 700, color: "#94A3B8", marginBottom: 6,
@@ -145,6 +145,8 @@ const CSS_GLOBAL = `
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   ::-webkit-scrollbar { display: none; }
+  html, body { margin: 0; padding: 0; overscroll-behavior: none; }
+  input, textarea, select, button { font-family: 'Nunito', -apple-system, sans-serif; font-size: 16px; }
 `;
 
 /* ── Confetti ── */
@@ -235,7 +237,7 @@ function Sheet({ open, onClose, title, children }) {
       <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", backdropFilter: "blur(6px)" }} />
       <div onClick={(e) => e.stopPropagation()} style={{
         position: "relative", background: "#fff", borderRadius: "24px 24px 0 0",
-        maxHeight: "90vh", overflow: "auto", padding: "0 20px 32px", animation: "sheetUp .3s ease",
+        maxHeight: "90vh", overflow: "auto", padding: "0 20px calc(env(safe-area-inset-bottom, 16px) + 16px)", animation: "sheetUp .3s ease",
       }}>
         <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}>
           <div style={{ width: 36, height: 4, borderRadius: 2, background: "#E2E8F0" }} />
@@ -572,7 +574,7 @@ function GoalDetail({ goal, onBack, onUpdate, onDelete, onConfetti, onEdit }) {
   return (
     <div style={{ animation: "pageIn .3s ease" }}>
       {/* Header */}
-      <div style={{ background: `linear-gradient(135deg, ${cat.accent}, ${cat.accent}CC)`, padding: "16px 20px 24px", color: "#fff", position: "relative", overflow: "hidden" }}>
+      <div style={{ background: `linear-gradient(135deg, ${cat.accent}, ${cat.accent}CC)`, padding: "calc(env(safe-area-inset-top, 16px) + 8px) 20px 24px", color: "#fff", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: -30, right: -30, width: 120, height: 120, borderRadius: 60, background: "rgba(255,255,255,0.1)" }} />
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, position: "relative" }}>
           <button onClick={onBack} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "#fff", fontSize: 18, cursor: "pointer", padding: "8px 12px", borderRadius: 12 }}>←</button>
@@ -622,7 +624,7 @@ function GoalDetail({ goal, onBack, onUpdate, onDelete, onConfetti, onEdit }) {
       </div>
 
       {/* Tasks */}
-      <div style={{ padding: "20px 16px 100px" }}>
+      <div style={{ padding: "20px 16px calc(env(safe-area-inset-bottom, 20px) + 20px)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
           <span style={{ fontSize: 15, fontWeight: 800 }}>Задачи</span>
           <button onClick={() => setSortBy((s) => s === "priority" ? "default" : "priority")} style={{
@@ -1344,19 +1346,19 @@ export default function App() {
 
   // Main screen
   return (
-    <div style={{ fontFamily: "'Nunito', -apple-system, sans-serif", background: "#F8FAFC", minHeight: "100vh", maxWidth: 430, margin: "0 auto", paddingBottom: 80, color: "#0F172A" }}>
+    <div style={{ fontFamily: "'Nunito', -apple-system, sans-serif", background: "#F8FAFC", minHeight: "100vh", maxWidth: 430, margin: "0 auto", paddingBottom: "calc(env(safe-area-inset-bottom, 16px) + 70px)", color: "#0F172A" }}>
       <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
       <style>{CSS_GLOBAL}</style>
       <Confetti active={confetti} />
 
       {/* Header */}
-      <div style={{ padding: "20px 20px 0", background: "linear-gradient(180deg, #fff, #F8FAFC)" }}>
+      <div style={{ paddingTop: "calc(env(safe-area-inset-top, 20px) + 12px)", paddingLeft: 20, paddingRight: 20, background: "linear-gradient(180deg, #fff, #F8FAFC)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div>
             <div style={{ fontSize: 13, color: "#94A3B8", fontWeight: 600 }}>
               {new Date().toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "long" })}
             </div>
-            <h1 style={{ margin: "2px 0 0", fontSize: 26, fontWeight: 900, letterSpacing: "-0.03em" }}>GoalFlow ✨</h1>
+            <h1 style={{ margin: "2px 0 0", fontSize: 24, fontWeight: 900, letterSpacing: "-0.03em" }}>GoalFlow ✨</h1>
           </div>
           {tab === "goals" && (
             <button onClick={() => { setEditG(null); setSheet(true); }} style={{
@@ -1413,7 +1415,7 @@ export default function App() {
         width: "100%", maxWidth: 430, background: "rgba(255,255,255,0.95)",
         backdropFilter: "blur(20px)", borderTop: "1px solid #F1F5F9",
         display: "flex", justifyContent: "space-around",
-        padding: "6px 0 env(safe-area-inset-bottom, 10px)", zIndex: 100,
+        padding: "8px 0 calc(env(safe-area-inset-bottom, 8px) + 4px)", zIndex: 100,
       }}>
         {tabs.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
