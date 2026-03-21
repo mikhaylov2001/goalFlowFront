@@ -145,7 +145,7 @@ const CSS_GLOBAL = `
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   ::-webkit-scrollbar { display: none; }
-  html, body { margin: 0; padding: 0; overscroll-behavior: none; background: #F8FAFC; }
+  html, body { margin: 0; padding: 0; overscroll-behavior: none; background: #ffffff; }
   input, textarea, select, button { font-family: 'Nunito', -apple-system, sans-serif; font-size: 16px; }
 `;
 
@@ -333,14 +333,14 @@ function GoalForm({ goal, onSave, onClose }) {
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
         <div>
           <label style={S.lbl}>Дедлайн 📅</label>
-          <input type="date" value={f.deadline} onChange={(e) => u("deadline", e.target.value)} style={S.field} />
+          <input type="date" value={f.deadline} onChange={(e) => u("deadline", e.target.value)} style={{ ...S.field, height: 48 }} />
         </div>
         <div>
           <label style={S.lbl}>Награда 🎁</label>
-          <input value={f.reward} onChange={(e) => u("reward", e.target.value)} placeholder="За победу!" style={S.field} />
+          <input value={f.reward} onChange={(e) => u("reward", e.target.value)} placeholder="За победу!" style={{ ...S.field, height: 48 }} />
         </div>
       </div>
 
@@ -699,87 +699,117 @@ function GoalDetail({ goal, onBack, onUpdate, onDelete, onConfetti, onEdit }) {
 /* ── TaskItem ── */
 function TaskItem({ task, tp, accent, isExp, onToggleExp, onToggle, onToggleMicro, onDelete, onAddMicro, onSetPrio, cd, ct }) {
   const [micro, setMicro] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [editVal, setEditVal] = useState(task.title);
+  const [editMicro, setEditMicro] = useState(null);
+  const [editMicroVal, setEditMicroVal] = useState("");
   const has = ct > 0;
+
+  const saveTitle = () => {
+    if (editVal.trim() && editVal !== task.title) {
+      apiFetch(`/api/tasks/${task.id}`, { method: "PUT", body: JSON.stringify({ title: editVal.trim() }) }).catch(console.error);
+    }
+    setEditing(false);
+  };
+
+  const saveMicro = (mid) => {
+    if (editMicroVal.trim()) {
+      apiFetch(`/api/microtasks/${mid}`, { method: "PUT", body: JSON.stringify({ title: editMicroVal.trim() }) }).catch(console.error);
+    }
+    setEditMicro(null);
+  };
 
   return (
     <div style={{
-      background: "#fff", borderRadius: 18, overflow: "hidden",
-      boxShadow: task.done ? "none" : "0 1px 4px rgba(0,0,0,0.04)",
-      border: task.done ? "1px solid #F1F5F9" : `1px solid ${tp.c}18`,
-      opacity: task.done ? 0.6 : 1,
+      background: "#fff", borderRadius: 16, overflow: "hidden",
+      boxShadow: task.done ? "none" : "0 1px 3px rgba(0,0,0,0.04)",
+      border: task.done ? "1px solid #F1F5F9" : "1px solid #F1F5F9",
+      opacity: task.done ? 0.55 : 1,
     }}>
-      <div style={{ height: 3, background: `linear-gradient(90deg, ${tp.c}, ${tp.c}55)` }} />
-      <div style={{ padding: "14px 16px" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+      <div style={{ height: 3, background: tp.c }} />
+      <div style={{ padding: "12px 14px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div onClick={onToggle} style={{
-            width: 28, height: 28, borderRadius: 10, flexShrink: 0, marginTop: 1,
-            border: task.done ? "none" : `2.5px solid ${tp.c}55`,
-            background: task.done ? `linear-gradient(135deg, ${accent}, ${accent}BB)` : "#fff",
+            width: 24, height: 24, borderRadius: 8, flexShrink: 0,
+            border: task.done ? "none" : `2px solid ${tp.c}44`,
+            background: task.done ? accent : "#fff",
             cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-            color: "#fff", fontSize: 14, fontWeight: 800,
+            color: "#fff", fontSize: 12, fontWeight: 800,
           }}>{task.done && "✓"}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <span style={{
-              fontSize: 15, fontWeight: 680,
-              textDecoration: task.done ? "line-through" : "none",
-              color: task.done ? "#B0B8C4" : "#1E293B",
-            }}>{task.title}</span>
-            <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
-              {TPRIO.map((p) => (
-                <button key={p.id} onClick={() => onSetPrio(p.id)} style={{
-                  padding: "2px 6px", borderRadius: 50, border: "none",
-                  fontSize: 9, fontWeight: 700, cursor: "pointer",
-                  background: task.prio === p.id ? p.c + "20" : "transparent",
-                  color: task.prio === p.id ? p.c : "#D1D5DB",
-                }}>{p.e}</button>
-              ))}
-            </div>
-            {has && (
-              <div onClick={onToggleExp} style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6, cursor: "pointer" }}>
-                <div style={{ display: "flex", gap: 3 }}>
-                  {task.children.map((c) => (
-                    <div key={c.id} style={{ width: 8, height: 8, borderRadius: 4, background: c.done ? "#10B981" : "#E2E8F0" }} />
-                  ))}
-                </div>
-                <span style={{ fontSize: 11, fontWeight: 600, color: cd === ct && ct > 0 ? "#10B981" : "#94A3B8" }}>{cd}/{ct} {isExp ? "▲" : "▼"}</span>
-              </div>
-            )}
-            {!has && !task.done && (
-              <button onClick={onToggleExp} style={{
-                background: "none", border: "none", fontSize: 11, color: "#CBD5E1",
-                cursor: "pointer", padding: "4px 0", fontWeight: 600, marginTop: 4,
-              }}>{isExp ? "Скрыть" : "+ микрозадачи"}</button>
+            {editing ? (
+              <input autoFocus value={editVal} onChange={(e) => setEditVal(e.target.value)}
+                onBlur={saveTitle} onKeyDown={(e) => e.key === "Enter" && saveTitle()}
+                style={{ width: "100%", fontSize: 15, fontWeight: 600, border: "none", borderBottom: `2px solid ${accent}`, outline: "none", padding: "2px 0", background: "transparent" }} />
+            ) : (
+              <div onClick={() => { setEditing(true); setEditVal(task.title); }} style={{
+                fontSize: 15, fontWeight: 600,
+                textDecoration: task.done ? "line-through" : "none",
+                color: task.done ? "#B0B8C4" : "#1E293B",
+              }}>{task.title}</div>
             )}
           </div>
-          <button onClick={onDelete} style={{ background: "none", border: "none", color: "#E2E8F0", fontSize: 14, cursor: "pointer", padding: "4px 6px", borderRadius: 8, flexShrink: 0 }}>✕</button>
+          {/* Small priority dot */}
+          <div style={{ display: "flex", gap: 3, flexShrink: 0 }}>
+            {TPRIO.map((p) => (
+              <div key={p.id} onClick={() => onSetPrio(p.id)} style={{
+                width: 14, height: 14, borderRadius: 7, cursor: "pointer",
+                background: task.prio === p.id ? p.c : "#F1F5F9",
+                border: task.prio === p.id ? "none" : "1px solid #E2E8F0",
+              }} />
+            ))}
+          </div>
+          <button onClick={onDelete} style={{ background: "none", border: "none", color: "#D1D5DB", fontSize: 13, cursor: "pointer", padding: 2, flexShrink: 0 }}>✕</button>
         </div>
+        {/* Microtask indicator */}
+        {has && (
+          <div onClick={onToggleExp} style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 6, marginLeft: 34, cursor: "pointer" }}>
+            <div style={{ display: "flex", gap: 3 }}>
+              {task.children.map((c) => (
+                <div key={c.id} style={{ width: 7, height: 7, borderRadius: 4, background: c.done ? "#10B981" : "#E2E8F0" }} />
+              ))}
+            </div>
+            <span style={{ fontSize: 11, fontWeight: 600, color: cd === ct && ct > 0 ? "#10B981" : "#94A3B8" }}>{cd}/{ct} {isExp ? "▲" : "▼"}</span>
+          </div>
+        )}
+        {!has && !task.done && (
+          <div onClick={onToggleExp} style={{ marginLeft: 34, marginTop: 4, fontSize: 11, color: "#CBD5E1", cursor: "pointer", fontWeight: 600 }}>
+            {isExp ? "Скрыть" : "+ микрозадачи"}
+          </div>
+        )}
       </div>
       {isExp && (
-        <div style={{ padding: "0 16px 14px", borderTop: "1px solid #FAFAFA" }}>
+        <div style={{ padding: "0 14px 12px", borderTop: "1px solid #F8FAFC" }}>
           {task.children.map((ch) => (
-            <div key={ch.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0 10px 14px", borderBottom: "1px solid #FAFAFA" }}>
+            <div key={ch.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0 8px 34px", borderBottom: "1px solid #FAFAFA" }}>
               <div onClick={() => onToggleMicro(ch.id)} style={{
-                width: 22, height: 22, borderRadius: 7, flexShrink: 0,
+                width: 20, height: 20, borderRadius: 6, flexShrink: 0,
                 border: ch.done ? "none" : "2px solid #E2E8F0",
                 background: ch.done ? "#10B981" : "#fff",
                 cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                color: "#fff", fontSize: 11, fontWeight: 800,
+                color: "#fff", fontSize: 10, fontWeight: 800,
               }}>{ch.done && "✓"}</div>
-              <span style={{
-                flex: 1, fontSize: 14, fontWeight: 550,
-                color: ch.done ? "#B0B8C4" : "#475569",
-                textDecoration: ch.done ? "line-through" : "none",
-              }}>{ch.title}</span>
+              {editMicro === ch.id ? (
+                <input autoFocus value={editMicroVal} onChange={(e) => setEditMicroVal(e.target.value)}
+                  onBlur={() => saveMicro(ch.id)} onKeyDown={(e) => e.key === "Enter" && saveMicro(ch.id)}
+                  style={{ flex: 1, fontSize: 14, border: "none", borderBottom: `2px solid ${accent}`, outline: "none", padding: "2px 0", background: "transparent" }} />
+              ) : (
+                <span onClick={() => { setEditMicro(ch.id); setEditMicroVal(ch.title); }} style={{
+                  flex: 1, fontSize: 14, fontWeight: 500,
+                  color: ch.done ? "#B0B8C4" : "#475569",
+                  textDecoration: ch.done ? "line-through" : "none",
+                }}>{ch.title}</span>
+              )}
             </div>
           ))}
-          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+          <div style={{ display: "flex", gap: 8, marginTop: 8, marginLeft: 34 }}>
             <input value={micro} onChange={(e) => setMicro(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") { onAddMicro(micro); setMicro(""); } }}
               placeholder="＋ Микрозадача..."
-              style={{ flex: 1, padding: "10px 12px", borderRadius: 12, border: "1.5px solid #F1F5F9", fontSize: 13, outline: "none", background: "#FAFAFA", color: "#0F172A", boxSizing: "border-box" }} />
+              style={{ flex: 1, padding: "8px 12px", borderRadius: 10, border: "1.5px solid #F1F5F9", fontSize: 14, outline: "none", background: "#FAFAFA", color: "#0F172A", boxSizing: "border-box" }} />
             <button onClick={() => { onAddMicro(micro); setMicro(""); }} style={{
-              width: 38, height: 38, borderRadius: 10, border: "none",
-              background: "#F1F5F9", color: accent, fontSize: 18, cursor: "pointer",
+              width: 36, height: 36, borderRadius: 10, border: "none",
+              background: "#F1F5F9", color: accent, fontSize: 16, cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>+</button>
           </div>
@@ -1424,10 +1454,10 @@ export default function App() {
       {/* Bottom Nav */}
       <div style={{
         position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
-        width: "100%", maxWidth: 430, background: "#ffffff",
+        width: "100%", maxWidth: 430, background: "#fff",
         borderTop: "1px solid #F1F5F9",
         display: "flex", justifyContent: "space-around",
-        paddingTop: 8, paddingBottom: "max(env(safe-area-inset-bottom), 8px)", zIndex: 100,
+        paddingTop: 8, paddingBottom: "max(env(safe-area-inset-bottom), 6px)", zIndex: 100,
       }}>
         {tabs.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
