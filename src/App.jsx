@@ -333,14 +333,20 @@ function GoalForm({ goal, onSave, onClose }) {
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
-        <div>
+      <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+        <div style={{ flex: 1 }}>
           <label style={S.lbl}>Дедлайн 📅</label>
-          <input type="date" value={f.deadline} onChange={(e) => u("deadline", e.target.value)} style={{ ...S.field, height: 48 }} />
+          <div style={{ ...S.field, display: "flex", alignItems: "center", padding: 0, overflow: "hidden" }}>
+            <input type="date" value={f.deadline} onChange={(e) => u("deadline", e.target.value)}
+              style={{ flex: 1, border: "none", outline: "none", padding: "12px 14px", fontSize: 16, background: "transparent", color: "#0F172A", WebkitAppearance: "none" }} />
+          </div>
         </div>
-        <div>
+        <div style={{ flex: 1 }}>
           <label style={S.lbl}>Награда 🎁</label>
-          <input value={f.reward} onChange={(e) => u("reward", e.target.value)} placeholder="За победу!" style={{ ...S.field, height: 48 }} />
+          <div style={{ ...S.field, display: "flex", alignItems: "center", padding: 0, overflow: "hidden" }}>
+            <input value={f.reward} onChange={(e) => u("reward", e.target.value)} placeholder="За победу!"
+              style={{ flex: 1, border: "none", outline: "none", padding: "12px 14px", fontSize: 16, background: "transparent", color: "#0F172A" }} />
+          </div>
         </div>
       </div>
 
@@ -561,6 +567,18 @@ function GoalDetail({ goal, onBack, onUpdate, onDelete, onConfetti, onEdit }) {
     onUpdate({ ...goal, tasks: goal.tasks.map((t) => t.id === tid ? { ...t, prio: p } : t) });
   };
 
+  const renameTask = async (tid, newTitle) => {
+    if (!newTitle.trim()) return;
+    try { await apiFetch(`/api/tasks/${tid}`, { method: "PUT", body: JSON.stringify({ title: newTitle.trim() }) }); } catch (e) { console.error(e); }
+    onUpdate({ ...goal, tasks: goal.tasks.map((t) => t.id === tid ? { ...t, title: newTitle.trim() } : t) });
+  };
+
+  const renameMicro = async (tid, mid, newTitle) => {
+    if (!newTitle.trim()) return;
+    try { await apiFetch(`/api/microtasks/${mid}`, { method: "PUT", body: JSON.stringify({ title: newTitle.trim() }) }); } catch (e) { console.error(e); }
+    onUpdate({ ...goal, tasks: goal.tasks.map((t) => t.id === tid ? { ...t, children: t.children.map((c) => c.id === mid ? { ...c, title: newTitle.trim() } : c) } : t) });
+  };
+
   const sorted = useMemo(() => {
     const arr = [...goal.tasks];
     if (sortBy === "priority") {
@@ -685,6 +703,8 @@ function GoalDetail({ goal, onBack, onUpdate, onDelete, onConfetti, onEdit }) {
                   onDelete={() => deleteTask(task.id)}
                   onAddMicro={(t) => addMicro(task.id, t)}
                   onSetPrio={(p) => setTPrio(task.id, p)}
+                  onRenameTask={(title) => renameTask(task.id, title)}
+                  onRenameMicro={(mid, title) => renameMicro(task.id, mid, title)}
                   cd={cd} ct={ct}
                 />
               );
@@ -697,7 +717,7 @@ function GoalDetail({ goal, onBack, onUpdate, onDelete, onConfetti, onEdit }) {
 }
 
 /* ── TaskItem ── */
-function TaskItem({ task, tp, accent, isExp, onToggleExp, onToggle, onToggleMicro, onDelete, onAddMicro, onSetPrio, cd, ct }) {
+function TaskItem({ task, tp, accent, isExp, onToggleExp, onToggle, onToggleMicro, onDelete, onAddMicro, onSetPrio, onRenameTask, onRenameMicro, cd, ct }) {
   const [micro, setMicro] = useState("");
   const [editing, setEditing] = useState(false);
   const [editVal, setEditVal] = useState(task.title);
@@ -706,16 +726,12 @@ function TaskItem({ task, tp, accent, isExp, onToggleExp, onToggle, onToggleMicr
   const has = ct > 0;
 
   const saveTitle = () => {
-    if (editVal.trim() && editVal !== task.title) {
-      apiFetch(`/api/tasks/${task.id}`, { method: "PUT", body: JSON.stringify({ title: editVal.trim() }) }).catch(console.error);
-    }
+    if (editVal.trim()) onRenameTask(editVal.trim());
     setEditing(false);
   };
 
   const saveMicro = (mid) => {
-    if (editMicroVal.trim()) {
-      apiFetch(`/api/microtasks/${mid}`, { method: "PUT", body: JSON.stringify({ title: editMicroVal.trim() }) }).catch(console.error);
-    }
+    if (editMicroVal.trim()) onRenameMicro(mid, editMicroVal.trim());
     setEditMicro(null);
   };
 
@@ -1453,11 +1469,12 @@ export default function App() {
 
       {/* Bottom Nav */}
       <div style={{
-        position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
-        width: "100%", maxWidth: 430, background: "#fff",
+        position: "fixed", bottom: 0, left: 0, right: 0,
+        background: "#fff",
         borderTop: "1px solid #F1F5F9",
         display: "flex", justifyContent: "space-around",
-        paddingTop: 8, paddingBottom: "max(env(safe-area-inset-bottom), 6px)", zIndex: 100,
+        maxWidth: 430, margin: "0 auto",
+        paddingTop: 8, paddingBottom: 8, zIndex: 100,
       }}>
         {tabs.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
