@@ -255,34 +255,34 @@ function EmojiPick({ value, onChange }) {
   return (
     <div>
       <button onClick={() => setOpen(!open)} style={{
-        width: 48, height: 48, borderRadius: 14, border: "2px solid #F1F5F9",
-        background: value ? "#EEF2FF" : "#FAFAFA", fontSize: 22, cursor: "pointer",
-        display: "flex", alignItems: "center", justifyContent: "center",
+        height: 44, paddingLeft: 14, paddingRight: 14, borderRadius: 12,
+        border: "1.5px solid #E2E8F0", background: value ? "#EEF2FF" : "#F8FAFC",
+        fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
       }}>
-        {value || "😀"}
+        <span>{value || "😀"}</span>
+        <span style={{ fontSize: 12, color: "#94A3B8", fontWeight: 600 }}>{open ? "▲" : "▼"}</span>
       </button>
       {open && (
         <div style={{
           marginTop: 8, background: "#fff", borderRadius: 16, padding: 10,
           border: "1.5px solid #F1F5F9", boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-          display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "flex-start",
+          display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4,
         }}>
           {EMOJI_LIST.map((e) => (
             <button key={e} onClick={() => { onChange(e); setOpen(false); }} style={{
-              width: 40, height: 40, borderRadius: 12, border: "none",
+              width: "100%", aspectRatio: "1", borderRadius: 10, border: "none",
               background: value === e ? "#EEF2FF" : "#F8FAFC",
               fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
             }}>{e}</button>
           ))}
           <button onClick={() => { onChange(""); setOpen(false); }} style={{
-            width: 40, height: 40, borderRadius: 12, border: "none",
-            background: "#FEF2F2", fontSize: 12, cursor: "pointer", fontWeight: 700, color: "#EF4444",
+            width: "100%", aspectRatio: "1", borderRadius: 10, border: "none",
+            background: "#FEF2F2", fontSize: 14, cursor: "pointer", fontWeight: 700, color: "#EF4444",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>✕</button>
         </div>
       )}
     </div>
-  );
   );
 }
 
@@ -900,23 +900,22 @@ function HabitForm({ habit, onSave, onClose }) {
   return (
     <>
       <input value={f.title} onChange={(e) => u("title", e.target.value)} placeholder="Название привычки"
-        style={{ width: "100%", fontSize: 20, fontWeight: 800, border: "none", padding: "8px 0", background: "transparent", outline: "none", color: "#0F172A", marginBottom: 16 }} />
-
-      <label style={S.lbl}>Иконка (необязательно)</label>
-      <div style={{ marginBottom: 16 }}>
-        <EmojiPick value={f.emoji} onChange={(v) => u("emoji", v)} />
-      </div>
+        style={{ width: "100%", fontSize: 20, fontWeight: 800, border: "none", padding: "8px 0", background: "transparent", outline: "none", color: "#0F172A", marginBottom: 20 }} />
 
       <label style={S.lbl}>Цвет</label>
-      <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
         {HABIT_COLORS.map((c) => (
           <div key={c} onClick={() => u("color", c)} style={{
             width: 38, height: 38, borderRadius: 12, background: c, cursor: "pointer",
             border: f.color === c ? "3px solid #0F172A" : "3px solid transparent",
             boxShadow: f.color === c ? `0 2px 8px ${c}66` : "none",
-            transition: "all .15s",
           }} />
         ))}
+      </div>
+
+      <label style={S.lbl}>Иконка (необязательно)</label>
+      <div style={{ marginBottom: 20 }}>
+        <EmojiPick value={f.emoji} onChange={(v) => u("emoji", v)} />
       </div>
 
       <button onClick={() => { if (f.title.trim()) { onSave(f); onClose(); } }} style={{
@@ -1428,7 +1427,7 @@ export default function App() {
         width: "100%", maxWidth: 430, background: "rgba(255,255,255,0.95)",
         backdropFilter: "blur(20px)", borderTop: "1px solid #F1F5F9",
         display: "flex", justifyContent: "space-around",
-        padding: "8px 0 calc(env(safe-area-inset-bottom, 8px) + 4px)", zIndex: 100,
+        padding: "10px 0 env(safe-area-inset-bottom, 0px)", zIndex: 100,
       }}>
         {tabs.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
