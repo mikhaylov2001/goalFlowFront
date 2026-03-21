@@ -253,34 +253,36 @@ function Sheet({ open, onClose, title, children }) {
 function EmojiPick({ value, onChange }) {
   const [open, setOpen] = useState(false);
   return (
-    <div style={{ position: "relative", display: "inline-block" }}>
+    <div>
       <button onClick={() => setOpen(!open)} style={{
-        width: 44, height: 44, borderRadius: 14, border: "2px solid #F1F5F9",
-        background: "#FAFAFA", fontSize: 20, cursor: "pointer",
+        width: 48, height: 48, borderRadius: 14, border: "2px solid #F1F5F9",
+        background: value ? "#EEF2FF" : "#FAFAFA", fontSize: 22, cursor: "pointer",
         display: "flex", alignItems: "center", justifyContent: "center",
       }}>
-        {value || "➕"}
+        {value || "😀"}
       </button>
       {open && (
         <div style={{
-          position: "absolute", top: 50, left: 0, zIndex: 50, background: "#fff",
-          borderRadius: 16, padding: 8, boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
-          display: "flex", flexWrap: "wrap", gap: 4, width: 220,
+          marginTop: 8, background: "#fff", borderRadius: 16, padding: 10,
+          border: "1.5px solid #F1F5F9", boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
+          display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "flex-start",
         }}>
           {EMOJI_LIST.map((e) => (
             <button key={e} onClick={() => { onChange(e); setOpen(false); }} style={{
-              width: 36, height: 36, borderRadius: 10, border: "none",
-              background: value === e ? "#EEF2FF" : "transparent",
-              fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+              width: 40, height: 40, borderRadius: 12, border: "none",
+              background: value === e ? "#EEF2FF" : "#F8FAFC",
+              fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
             }}>{e}</button>
           ))}
           <button onClick={() => { onChange(""); setOpen(false); }} style={{
-            width: 36, height: 36, borderRadius: 10, border: "none",
-            background: "#FEF2F2", fontSize: 11, cursor: "pointer", fontWeight: 700, color: "#EF4444",
+            width: 40, height: 40, borderRadius: 12, border: "none",
+            background: "#FEF2F2", fontSize: 12, cursor: "pointer", fontWeight: 700, color: "#EF4444",
+            display: "flex", alignItems: "center", justifyContent: "center",
           }}>✕</button>
         </div>
       )}
     </div>
+  );
   );
 }
 
@@ -305,14 +307,15 @@ function GoalForm({ goal, onSave, onClose }) {
         style={{ width: "100%", minHeight: 40, resize: "none", border: "none", padding: "4px 0", background: "transparent", fontSize: 14, color: "#94A3B8", outline: "none" }} />
 
       <label style={S.lbl}>Категория</label>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 16 }}>
         {CATS.map((c) => (
           <button key={c.id} onClick={() => u("cat", c.id)} style={{
-            padding: "8px 14px", borderRadius: 50,
+            padding: "10px 8px", borderRadius: 14,
             border: f.cat === c.id ? `2px solid ${c.accent}` : "2px solid #F1F5F9",
             background: f.cat === c.id ? c.accent + "14" : "#FAFAFA",
             fontSize: 13, fontWeight: 650, cursor: "pointer",
             color: f.cat === c.id ? c.accent : "#94A3B8",
+            textAlign: "center",
           }}>{c.emoji} {c.label}</button>
         ))}
       </div>
@@ -896,25 +899,31 @@ function HabitForm({ habit, onSave, onClose }) {
   const u = (k, v) => sf((p) => ({ ...p, [k]: v }));
   return (
     <>
-      <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16 }}>
+      <input value={f.title} onChange={(e) => u("title", e.target.value)} placeholder="Название привычки"
+        style={{ width: "100%", fontSize: 20, fontWeight: 800, border: "none", padding: "8px 0", background: "transparent", outline: "none", color: "#0F172A", marginBottom: 16 }} />
+
+      <label style={S.lbl}>Иконка (необязательно)</label>
+      <div style={{ marginBottom: 16 }}>
         <EmojiPick value={f.emoji} onChange={(v) => u("emoji", v)} />
-        <input value={f.title} onChange={(e) => u("title", e.target.value)} placeholder="Название"
-          style={{ flex: 1, fontSize: 18, fontWeight: 800, border: "none", padding: "8px 0", background: "transparent", outline: "none", color: "#0F172A" }} />
       </div>
+
       <label style={S.lbl}>Цвет</label>
-      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
         {HABIT_COLORS.map((c) => (
           <div key={c} onClick={() => u("color", c)} style={{
-            width: 32, height: 32, borderRadius: 10, background: c, cursor: "pointer",
+            width: 38, height: 38, borderRadius: 12, background: c, cursor: "pointer",
             border: f.color === c ? "3px solid #0F172A" : "3px solid transparent",
+            boxShadow: f.color === c ? `0 2px 8px ${c}66` : "none",
+            transition: "all .15s",
           }} />
         ))}
       </div>
+
       <button onClick={() => { if (f.title.trim()) { onSave(f); onClose(); } }} style={{
         width: "100%", padding: "16px 0", borderRadius: 16, border: "none",
         background: f.title.trim() ? "linear-gradient(135deg, #10B981, #059669)" : "#E2E8F0",
         color: f.title.trim() ? "#fff" : "#94A3B8", fontSize: 16, fontWeight: 800,
-        cursor: f.title.trim() ? "pointer" : "default", marginTop: 8,
+        cursor: f.title.trim() ? "pointer" : "default",
       }}>Сохранить</button>
     </>
   );
@@ -1010,13 +1019,17 @@ function WishForm({ wish, onSave, onClose }) {
   const u = (k, v) => sf((p) => ({ ...p, [k]: v }));
   return (
     <>
-      <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12 }}>
-        <EmojiPick value={f.emoji} onChange={(v) => u("emoji", v)} />
-        <input value={f.title} onChange={(e) => u("title", e.target.value)} placeholder="Я хочу..."
-          style={{ flex: 1, fontSize: 18, fontWeight: 800, border: "none", padding: "8px 0", background: "transparent", outline: "none", color: "#0F172A" }} />
-      </div>
+      <input value={f.title} onChange={(e) => u("title", e.target.value)} placeholder="Я хочу..."
+        style={{ width: "100%", fontSize: 20, fontWeight: 800, border: "none", padding: "8px 0", background: "transparent", outline: "none", color: "#0F172A", marginBottom: 12 }} />
+
       <textarea value={f.note} onChange={(e) => u("note", e.target.value)} placeholder="Подробности (необязательно)"
-        style={{ width: "100%", minHeight: 50, resize: "none", borderRadius: 14, border: "1.5px solid #E2E8F0", padding: "10px 14px", fontSize: 14, color: "#64748B", outline: "none", boxSizing: "border-box", marginBottom: 12 }} />
+        style={{ width: "100%", minHeight: 60, resize: "none", borderRadius: 14, border: "1.5px solid #E2E8F0", padding: "12px 14px", fontSize: 16, color: "#64748B", outline: "none", boxSizing: "border-box", marginBottom: 16 }} />
+
+      <label style={S.lbl}>Иконка (необязательно)</label>
+      <div style={{ marginBottom: 20 }}>
+        <EmojiPick value={f.emoji} onChange={(v) => u("emoji", v)} />
+      </div>
+
       <button onClick={() => { if (f.title.trim()) { onSave(f); onClose(); } }} style={{
         width: "100%", padding: "16px 0", borderRadius: 16, border: "none",
         background: f.title.trim() ? "linear-gradient(135deg, #EC4899, #DB2777)" : "#E2E8F0",
