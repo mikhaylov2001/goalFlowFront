@@ -96,6 +96,22 @@ const CSS_GLOBAL = `
   html,body { margin:0;padding:0;overscroll-behavior:none;background:#F8FAFC; }
   input,textarea,select,button { font-family:'Nunito',-apple-system,sans-serif;font-size:16px; }
   input:focus,textarea:focus { border-color:#6366F1 !important; }
+  .bottom-nav {
+    padding-bottom: 24px;
+  }
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .bottom-nav {
+      padding-bottom: max(24px, env(safe-area-inset-bottom));
+    }
+  }
+  .app-wrap {
+    padding-bottom: 110px;
+  }
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .app-wrap {
+      padding-bottom: calc(max(24px, env(safe-area-inset-bottom)) + 76px);
+    }
+  }
 `;
 
 /* ── Confetti ── */
@@ -196,16 +212,16 @@ function GoalForm({goal,onSave,onClose}) {
         ))}
       </div>
 
-      <div style={{display:"flex",gap:10,marginBottom:14}}>
-        <div style={{flex:1,display:"flex",flexDirection:"column"}}>
+      <div style={{display:"flex",gap:10,marginBottom:14,alignItems:"flex-end"}}>
+        <div style={{flex:1}}>
           <label style={S.lbl}>Дедлайн 📅</label>
           <input type="date" value={f.deadline} onChange={e=>u("deadline",e.target.value)}
-            style={{...S.field,padding:"0 14px",height:50,display:"flex",alignItems:"center"}}/>
+            style={{...S.field,height:52,padding:"0 14px",lineHeight:"52px"}}/>
         </div>
-        <div style={{flex:1,display:"flex",flexDirection:"column"}}>
+        <div style={{flex:1}}>
           <label style={S.lbl}>Награда 🎁</label>
           <input value={f.reward} onChange={e=>u("reward",e.target.value)} placeholder="За победу!"
-            style={{...S.field,padding:"0 14px",height:50}}/>
+            style={{...S.field,height:52,padding:"0 14px",lineHeight:"52px"}}/>
         </div>
       </div>
 
@@ -1109,7 +1125,7 @@ export default function App() {
   };
 
   return(
-    <div style={{fontFamily:"'Nunito',-apple-system,sans-serif",background:"#F8FAFC",minHeight:"100vh",maxWidth:430,margin:"0 auto",paddingBottom:"calc(env(safe-area-inset-bottom, 34px) + 90px)",color:"#0F172A"}}>
+    <div className="app-wrap" style={{fontFamily:"'Nunito',-apple-system,sans-serif",background:"#F8FAFC",minHeight:"100vh",maxWidth:430,margin:"0 auto",color:"#0F172A"}}>
       <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
       <style>{CSS_GLOBAL}</style>
       <Confetti active={confetti}/>
@@ -1166,7 +1182,7 @@ export default function App() {
       </div>
 
       {/* Bottom Nav */}
-      <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#fff",borderTop:"1px solid #F1F5F9",display:"flex",justifyContent:"space-around",paddingTop:10,paddingBottom:"calc(env(safe-area-inset-bottom, 34px) + 18px)",zIndex:100,boxShadow:"0 -4px 24px rgba(0,0,0,0.07)"}}>
+      <div className="bottom-nav" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#fff",borderTop:"1px solid #F1F5F9",display:"flex",justifyContent:"space-around",paddingTop:10,zIndex:100,boxShadow:"0 -4px 24px rgba(0,0,0,0.07)"}}>
         {tabs.map(t=>{
           const active=tab===t.id;
           return(
