@@ -197,13 +197,15 @@ function GoalForm({goal,onSave,onClose}) {
       </div>
 
       <div style={{display:"flex",gap:10,marginBottom:14}}>
-        <div style={{flex:1}}>
+        <div style={{flex:1,display:"flex",flexDirection:"column"}}>
           <label style={S.lbl}>Дедлайн 📅</label>
-          <input type="date" value={f.deadline} onChange={e=>u("deadline",e.target.value)} style={{...S.field,padding:"11px 14px"}}/>
+          <input type="date" value={f.deadline} onChange={e=>u("deadline",e.target.value)}
+            style={{...S.field,padding:"0 14px",height:50,display:"flex",alignItems:"center"}}/>
         </div>
-        <div style={{flex:1}}>
+        <div style={{flex:1,display:"flex",flexDirection:"column"}}>
           <label style={S.lbl}>Награда 🎁</label>
-          <input value={f.reward} onChange={e=>u("reward",e.target.value)} placeholder="За победу!" style={{...S.field,padding:"11px 14px"}}/>
+          <input value={f.reward} onChange={e=>u("reward",e.target.value)} placeholder="За победу!"
+            style={{...S.field,padding:"0 14px",height:50}}/>
         </div>
       </div>
 
@@ -912,7 +914,7 @@ function IdeaForm({idea,onSave,onClose}) {
   );
 }
 
-function IdeasPage() {
+function IdeasPage({onMakeGoal}) {
   const [ideas,setIdeas]=useIdeas();
   const [activeTag,setActiveTag]=useState("Все");
   const [sheet,setSheet]=useState(false);
@@ -995,7 +997,7 @@ function IdeasPage() {
                   </button>
                 </div>
                 <div style={{display:"flex",gap:8,marginTop:12}}>
-                  <button style={{flex:1,padding:"9px 0",borderRadius:12,border:"none",background:"#F8FAFC",color:"#6366F1",fontSize:12,fontWeight:700,cursor:"pointer",transition:"background .15s"}}>🎯 Сделать целью</button>
+                  <button onClick={()=>onMakeGoal&&onMakeGoal(idea)} style={{flex:1,padding:"9px 0",borderRadius:12,border:"none",background:"#EEF2FF",color:"#6366F1",fontSize:12,fontWeight:700,cursor:"pointer",transition:"background .15s"}}>🎯 Сделать целью</button>
                   <button onClick={()=>{setEditIdea(idea);setSheet(true);}} style={{padding:"9px 14px",borderRadius:12,border:"none",background:"#F8FAFC",color:"#64748B",fontSize:12,fontWeight:700,cursor:"pointer"}}>✏️</button>
                   <button onClick={()=>deleteIdea(idea.id)} style={{padding:"9px 14px",borderRadius:12,border:"none",background:"#FEF2F2",color:"#EF4444",fontSize:12,fontWeight:700,cursor:"pointer"}}>✕</button>
                 </div>
@@ -1107,7 +1109,7 @@ export default function App() {
   };
 
   return(
-    <div style={{fontFamily:"'Nunito',-apple-system,sans-serif",background:"#F8FAFC",minHeight:"100vh",maxWidth:430,margin:"0 auto",paddingBottom:90,color:"#0F172A"}}>
+    <div style={{fontFamily:"'Nunito',-apple-system,sans-serif",background:"#F8FAFC",minHeight:"100vh",maxWidth:430,margin:"0 auto",paddingBottom:"calc(env(safe-area-inset-bottom, 34px) + 90px)",color:"#0F172A"}}>
       <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
       <style>{CSS_GLOBAL}</style>
       <Confetti active={confetti}/>
@@ -1160,11 +1162,11 @@ export default function App() {
         {tab==="wishes"&&<WishesPage wishes={wishes} onUpdate={setWishes}/>}
         {tab==="cal"&&<CalView goals={goals}/>}
         {tab==="stats"&&<StatsPage goals={goals} habits={habits}/>}
-        {tab==="ideas"&&<IdeasPage/>}
+        {tab==="ideas"&&<IdeasPage onMakeGoal={idea=>{setTab("goals");setEditG({id:uid(),title:idea.title,desc:idea.note||"",cat:"work",prio:"medium",deadline:"",reward:"",tasks:[],notif:{enabled:false,freq:"daily",time:"09:00",day:"mon"},done:false,created:new Date().toISOString()});setSheet(true);}}/>}
       </div>
 
       {/* Bottom Nav */}
-      <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#fff",borderTop:"1px solid #F1F5F9",display:"flex",justifyContent:"space-around",paddingTop:8,paddingBottom:"calc(env(safe-area-inset-bottom,8px) + 8px)",zIndex:100,boxShadow:"0 -4px 24px rgba(0,0,0,0.07)"}}>
+      <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#fff",borderTop:"1px solid #F1F5F9",display:"flex",justifyContent:"space-around",paddingTop:10,paddingBottom:"calc(env(safe-area-inset-bottom, 34px) + 18px)",zIndex:100,boxShadow:"0 -4px 24px rgba(0,0,0,0.07)"}}>
         {tabs.map(t=>{
           const active=tab===t.id;
           return(
