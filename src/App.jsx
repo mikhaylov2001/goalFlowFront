@@ -97,19 +97,19 @@ const CSS_GLOBAL = `
   input,textarea,select,button { font-family:'Nunito',-apple-system,sans-serif;font-size:16px; }
   input:focus,textarea:focus { border-color:#6366F1 !important; }
   .bottom-nav {
-    padding-bottom: 24px;
+    padding-bottom: 10px;
   }
   @supports (padding-bottom: env(safe-area-inset-bottom)) {
     .bottom-nav {
-      padding-bottom: max(24px, env(safe-area-inset-bottom));
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
     }
   }
   .app-wrap {
-    padding-bottom: 110px;
+    padding-bottom: 90px;
   }
   @supports (padding-bottom: env(safe-area-inset-bottom)) {
     .app-wrap {
-      padding-bottom: calc(max(24px, env(safe-area-inset-bottom)) + 76px);
+      padding-bottom: calc(max(10px, env(safe-area-inset-bottom)) + 70px);
     }
   }
 `;
@@ -212,16 +212,16 @@ function GoalForm({goal,onSave,onClose}) {
         ))}
       </div>
 
-      <div style={{display:"flex",gap:10,marginBottom:14,alignItems:"flex-end"}}>
-        <div style={{flex:1}}>
+      <div style={{display:"flex",gap:10,marginBottom:14,alignItems:"flex-start"}}>
+        <div style={{flex:"1 1 0",minWidth:0}}>
           <label style={S.lbl}>Дедлайн 📅</label>
           <input type="date" value={f.deadline} onChange={e=>u("deadline",e.target.value)}
-            style={{...S.field,height:52,padding:"0 14px",lineHeight:"52px"}}/>
+            style={{...S.field,height:52,padding:"0 12px",display:"block",width:"100%"}}/>
         </div>
-        <div style={{flex:1}}>
+        <div style={{flex:"1 1 0",minWidth:0}}>
           <label style={S.lbl}>Награда 🎁</label>
           <input value={f.reward} onChange={e=>u("reward",e.target.value)} placeholder="За победу!"
-            style={{...S.field,height:52,padding:"0 14px",lineHeight:"52px"}}/>
+            style={{...S.field,height:52,padding:"0 12px",display:"block",width:"100%"}}/>
         </div>
       </div>
 
@@ -1084,11 +1084,21 @@ export default function App() {
   const doEditGoal=useCallback(g=>{setEditG(g);setSheet(true);setOpenGId(null);},[]);
 
   const filtered=useMemo(()=>{
-    let l=goals;
+    let l=[...goals];
     if(filt==="active")l=l.filter(g=>!g.done);
     else if(filt==="done")l=l.filter(g=>g.done);
     else if(filt==="overdue")l=l.filter(g=>!g.done&&g.deadline&&daysLeft(g.deadline)<0);
     if(search.trim())l=l.filter(g=>g.title.toLowerCase().includes(search.toLowerCase()));
+    const prioN={high:0,medium:1,low:2};
+    l.sort((a,b)=>{
+      if(a.done!==b.done)return a.done?1:-1;
+      const pa=prioN[a.prio]??1; const pb=prioN[b.prio]??1;
+      if(pa!==pb)return pa-pb;
+      if(a.deadline&&b.deadline)return new Date(a.deadline)-new Date(b.deadline);
+      if(a.deadline)return -1;
+      if(b.deadline)return 1;
+      return 0;
+    });
     return l;
   },[goals,filt,search]);
 
