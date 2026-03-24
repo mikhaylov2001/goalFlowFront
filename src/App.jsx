@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import api from "./api";
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -186,7 +187,7 @@ function EmojiPick({value,onChange}) {
 
 /* ── GoalForm ── */
 function GoalForm({goal,onSave,onClose}) {
-  const [f,sf]=useState(goal||{id:uid(),title:"",desc:"",cat:"work",prio:"medium",deadline:"",reward:"",tasks:[],notif:{enabled:false,freq:"daily",time:"09:00",day:"mon"},done:false,created:new Date().toISOString()});
+  const [f,sf]=useState(goal||{id:uid(),title:"",desc:"",cat:"work",prio:"medium",deadline:"",reward:"",tasks:[],done:false,created:new Date().toISOString()});
   const u=(k,v)=>sf(p=>({...p,[k]:v}));
   const un=(k,v)=>sf(p=>({...p,notif:{...p.notif,[k]:v}}));
   return (
@@ -213,49 +214,16 @@ function GoalForm({goal,onSave,onClose}) {
       </div>
 
       <div style={{display:"flex",gap:10,marginBottom:14,alignItems:"flex-start"}}>
-        <div style={{flex:"1 1 0",minWidth:0}}>
+        <div style={{flex:1}}>
           <label style={S.lbl}>Дедлайн 📅</label>
           <input type="date" value={f.deadline} onChange={e=>u("deadline",e.target.value)}
             style={{...S.field,height:52,padding:"0 12px",display:"block",width:"100%"}}/>
         </div>
-        <div style={{flex:"1 1 0",minWidth:0}}>
+        <div style={{flex:1}}>
           <label style={S.lbl}>Награда 🎁</label>
           <input value={f.reward} onChange={e=>u("reward",e.target.value)} placeholder="За победу!"
             style={{...S.field,height:52,padding:"0 12px",display:"block",width:"100%"}}/>
         </div>
-      </div>
-
-      <div style={{background:"#F8FAFC",borderRadius:18,padding:14,marginBottom:16}}>
-        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:f.notif.enabled?12:0}}>
-          <span style={{fontSize:20}}>🔔</span>
-          <span style={{flex:1,fontSize:14,fontWeight:700}}>Уведомления</span>
-          <div onClick={()=>un("enabled",!f.notif.enabled)} style={{width:48,height:28,borderRadius:14,background:f.notif.enabled?"#6366F1":"#E2E8F0",cursor:"pointer",position:"relative",transition:"background .2s"}}>
-            <div style={{width:22,height:22,borderRadius:11,background:"#fff",position:"absolute",top:3,left:f.notif.enabled?23:3,transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.15)"}}/>
-          </div>
-        </div>
-        {f.notif.enabled&&(
-          <>
-            <div style={{display:"flex",gap:6,marginBottom:10}}>
-              {[{id:"daily",l:"Каждый день"},{id:"weekly",l:"Раз в неделю"}].map(fr=>(
-                <button key={fr.id} onClick={()=>un("freq",fr.id)} style={{flex:1,padding:"10px 0",borderRadius:12,border:f.notif.freq===fr.id?"2px solid #6366F1":"2px solid #E2E8F0",background:f.notif.freq===fr.id?"#EEF2FF":"#fff",fontSize:12,fontWeight:700,cursor:"pointer",color:f.notif.freq===fr.id?"#6366F1":"#94A3B8"}}>{fr.l}</button>
-              ))}
-            </div>
-            <div style={{display:"flex",gap:10}}>
-              <div style={{flex:1}}>
-                <label style={{...S.lbl,fontSize:10}}>Время</label>
-                <input type="time" value={f.notif.time} onChange={e=>un("time",e.target.value)} style={{...S.field,padding:"9px 12px",fontSize:14}}/>
-              </div>
-              {f.notif.freq==="weekly"&&(
-                <div style={{flex:1}}>
-                  <label style={{...S.lbl,fontSize:10}}>День</label>
-                  <select value={f.notif.day} onChange={e=>un("day",e.target.value)} style={{...S.field,padding:"9px 12px",fontSize:14}}>
-                    {[["mon","Пн"],["tue","Вт"],["wed","Ср"],["thu","Чт"],["fri","Пт"],["sat","Сб"],["sun","Вс"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}
-                  </select>
-                </div>
-              )}
-            </div>
-          </>
-        )}
       </div>
 
       <button onClick={()=>{if(f.title.trim()){onSave(f);onClose();}}} style={{width:"100%",padding:"17px 0",borderRadius:18,border:"none",background:f.title.trim()?"linear-gradient(135deg,#6366F1,#8B5CF6)":"#E2E8F0",color:f.title.trim()?"#fff":"#94A3B8",fontSize:16,fontWeight:800,cursor:f.title.trim()?"pointer":"default",boxShadow:f.title.trim()?"0 6px 20px rgba(99,102,241,.35)":"none",transition:"all .2s"}}>
@@ -285,7 +253,6 @@ function GoalCard({g,onTap,onToggle}) {
             <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:4,flexWrap:"wrap"}}>
               <span style={{fontSize:10,fontWeight:800,padding:"2px 8px",borderRadius:6,background:pri.bg,color:pri.c}}>{pri.l}</span>
               {g.reward&&<span style={{fontSize:12}}>🎁</span>}
-              {g.notif?.enabled&&<span style={{fontSize:12}}>🔔</span>}
             </div>
             <div style={{fontSize:16,fontWeight:800,color:g.done?"#94A3B8":"#0F172A",textDecoration:g.done?"line-through":"none",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",lineHeight:1.2}}>{g.title}</div>
             <div style={{display:"flex",gap:6,marginTop:5,flexWrap:"wrap",alignItems:"center"}}>
@@ -738,12 +705,48 @@ function WishForm({wish,onSave,onClose}) {
 }
 
 /* ── CalendarView ── */
-function CalView({goals}) {
+function CalView({goals,calTasks,setCalTasks}) {
   const [cur,setCur]=useState(new Date());
+  const [priorityFilter,setPriorityFilter]=useState("all");
   const y=cur.getFullYear(); const m=cur.getMonth();
   const days=monthDays(y,m); const today=new Date();
   const gmap=useMemo(()=>{const mp={};goals.forEach(g=>{if(g.deadline)(mp[g.deadline]=mp[g.deadline]||[]).push(g);});return mp;},[goals]);
-  const upcoming=useMemo(()=>goals.filter(g=>!g.done&&g.deadline).sort((a,b)=>{const pa=PRIO[a.prio]?.n??1;const pb=PRIO[b.prio]?.n??1;if(pa!==pb)return pa-pb;return new Date(a.deadline)-new Date(b.deadline);}),[goals]);
+  const [sheet,setSheet]=useState(false);
+  const [selectedDate,setSelectedDate]=useState(null);
+  const [newTask,setNewTask]=useState("");
+
+  const tasksByDate = useMemo(()=>{
+    const prioOrder={high:0,medium:1,low:2};
+    const map = {};
+    calTasks
+      .filter(t=>priorityFilter==="all"||t.prio===priorityFilter)
+      .sort((a,b)=>{
+        if(a.date!==b.date) return a.date.localeCompare(b.date);
+        const pa=prioOrder[a.prio]||1; const pb=prioOrder[b.prio]||1;
+        if(pa!==pb) return pa-pb;
+        return a.title.localeCompare(b.title);
+      })
+      .forEach(t=>{map[t.date]=map[t.date]||[];map[t.date].push(t);});
+    return map;
+  },[calTasks,priorityFilter]);
+
+  const addTask=async()=>{
+    if(!newTask.trim()||!selectedDate)return;
+    const dk=dateKey(selectedDate);
+    try{
+      const res = await api.createCalendar({title:newTask.trim(),date:dk,prio:"medium"});
+      setCalTasks(prev=>[...prev,{id:res.id,title:newTask.trim(),date:dk,done:false,prio:"medium"}]);
+      setNewTask("");setSheet(false);setSelectedDate(null);
+    }catch(e){console.error(e);}
+  };
+
+  const toggleTask=async(tid,done)=>{
+    try{
+      await api.updateCalendar(tid,{done:!done});
+      setCalTasks(prev=>prev.map(t=>t.id===tid?{...t,done:!done}:t));
+    }catch(e){console.error(e);}
+  };
+
   return (
     <div>
       <div style={{background:"linear-gradient(135deg,#8B5CF6,#7C3AED)",borderRadius:22,padding:"16px 20px",marginBottom:14,color:"#fff"}}>
@@ -753,6 +756,13 @@ function CalView({goals}) {
           <button onClick={()=>setCur(new Date(y,m+1,1))} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"#fff",fontSize:18,cursor:"pointer",padding:"8px 14px",borderRadius:12,backdropFilter:"blur(8px)"}}>▶</button>
         </div>
       </div>
+
+      <div style={{display:"flex",gap:8,marginBottom:12}}>
+        {[{id:"all",l:"Все"},{id:"high",l:"Важные"},{id:"medium",l:"Средние"},{id:"low",l:"Низкие"}].map(p=>(
+          <button key={p.id} onClick={()=>setPriorityFilter(p.id)} style={{padding:"8px 14px",borderRadius:50,border:"none",background:priorityFilter===p.id?"#6366F1":"#fff",color:priorityFilter===p.id?"#fff":"#94A3B8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{p.l}</button>
+        ))}
+      </div>
+
       <div style={{background:"#fff",borderRadius:22,padding:"14px 12px",boxShadow:"0 2px 14px rgba(0,0,0,0.06)",marginBottom:14}}>
         <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:8}}>
           {WEEKDAYS.map(d=><div key={d} style={{textAlign:"center",fontSize:10,fontWeight:800,color:"#94A3B8",padding:4}}>{d}</div>)}
@@ -760,16 +770,72 @@ function CalView({goals}) {
         <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3}}>
           {days.map(({d,cur:cm},i)=>{
             const k=dateKey(d); const dg=gmap[k]||[]; const td=sameDay(d,today);
+            const ct=tasksByDate[k]||[];
             return (
-              <div key={i} style={{minHeight:48,padding:4,borderRadius:12,background:td?"#EEF2FF":cm?"#FAFAFA":"transparent",border:td?"2px solid #6366F1":"2px solid transparent",opacity:cm?1:.2}}>
+              <div key={i} onClick={()=>{setSelectedDate(d);setSheet(true);}} style={{minHeight:48,padding:4,borderRadius:12,background:td?"#EEF2FF":cm?"#FAFAFA":"transparent",border:td?"2px solid #6366F1":"2px solid transparent",opacity:cm?1:.2,cursor:"pointer"}}>
                 <div style={{fontSize:11,fontWeight:td?900:600,color:td?"#6366F1":"#64748B",marginBottom:2}}>{d.getDate()}</div>
-                {dg.slice(0,2).map(g=>{const ct=CATS.find(c=>c.id===g.cat);return<div key={g.id} style={{fontSize:8,padding:"1px 4px",borderRadius:4,marginBottom:1,background:ct?.accent+"20",color:ct?.accent,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textDecoration:g.done?"line-through":"none"}}>{g.title}</div>;})}
-                {dg.length>2&&<div style={{fontSize:8,color:"#94A3B8",fontWeight:700}}>+{dg.length-2}</div>}
+                {dg.slice(0,2).map(g=>{
+                  const cat=CATS.find(c=>c.id===g.cat);
+                  return <div key={g.id} style={{fontSize:8,padding:"1px 4px",borderRadius:4,marginBottom:1,background:cat?.accent+"20",color:cat?.accent,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textDecoration:g.done?"line-through":"none"}}>{g.title}</div>;
+                })}
+                {ct.slice(0,2).map(t=>{
+                  const pr=TPRIO.find(x=>x.id===t.prio)||TPRIO[1];
+                  return <div key={t.id} style={{fontSize:8,padding:"1px 4px",borderRadius:4,marginBottom:1,background:t.done?"#10B98120":pr.c+"20",color:t.done?"#10B981":pr.c,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textDecoration:t.done?"line-through":"none"}}>{t.title}</div>;
+                })}
+                {dg.length+ct.length>2&&<div style={{fontSize:8,color:"#94A3B8",fontWeight:700}}>+{dg.length+ct.length-2}</div>}
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Tasks for today, tomorrow, etc. */}
+      <div style={{fontWeight:900,fontSize:16,marginBottom:12}}>📅 Задачи на ближайшие дни</div>
+      {["today","tomorrow","dayAfter"].map((key,i)=>{
+        const d=new Date(); d.setDate(d.getDate()+i);
+        const dk=dateKey(d);
+        const tasks=tasksByDate[dk]||[];
+        return (
+          <div key={key} style={{marginBottom:16}}>
+            <div style={{fontSize:14,fontWeight:700,color:"#64748B",marginBottom:8}}>{i===0?"Сегодня":i===1?"Завтра":"Послезавтра"} ({fmtDate(d)})</div>
+            {tasks.length===0?(
+              <div style={{textAlign:"center",padding:"12px",color:"#CBD5E1",fontSize:13}}>Нет задач</div>
+            ):(
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                {tasks.map(t=>{
+                  return (
+                    <div key={t.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:14,background:"#fff",boxShadow:"0 1px 6px rgba(0,0,0,0.05)"}}>
+                      <div onClick={()=>toggleTask(t.id,t.done)} style={{width:24,height:24,borderRadius:8,border:"2px solid #E2E8F0",background:t.done?"#10B981":"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14,fontWeight:900}}>
+                        {t.done&&"✓"}
+                      </div>
+                      <span style={{flex:1,fontSize:14,textDecoration:t.done?"line-through":"none",color:t.done?"#94A3B8":"#0F172A"}}>{t.title}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {sheet&&(
+        <Sheet open={sheet} onClose={()=>{setSheet(false);setSelectedDate(null);setNewTask("");}} title={`Добавить задачу на ${selectedDate?fmtDate(selectedDate):""}`}>
+          <input value={newTask} onChange={e=>setNewTask(e.target.value)} placeholder="Название задачи..."
+            style={{width:"100%",padding:"14px 16px",borderRadius:18,border:"2px solid #F1F5F9",fontSize:15,outline:"none",background:"#fff",color:"#0F172A",boxSizing:"border-box",marginBottom:16}}/>
+          <button onClick={addTask} style={{width:"100%",padding:"17px 0",borderRadius:18,border:"none",background:newTask.trim()?"linear-gradient(135deg,#6366F1,#8B5CF6)":"#E2E8F0",color:newTask.trim()?"#fff":"#94A3B8",fontSize:16,fontWeight:800,cursor:newTask.trim()?"pointer":"default",boxShadow:newTask.trim()?"0 6px 20px rgba(99,102,241,.35)":"none",transition:"all .2s"}}>
+            Добавить 🚀
+          </button>
+        </Sheet>
+      )}
+    </div>
+  );
+}
+
+/* ── DeadlinesView ── */
+function DeadlinesView({goals}) {
+  const upcoming=useMemo(()=>goals.filter(g=>!g.done&&g.deadline).sort((a,b)=>{const pa=PRIO[a.prio]?.n??1;const pb=PRIO[b.prio]?.n??1;if(pa!==pb)return pa-pb;return new Date(a.deadline)-new Date(b.deadline);}),[goals]);
+  return (
+    <div>
       <div style={{fontWeight:900,fontSize:16,marginBottom:12}}>📋 Дедлайны <span style={{fontSize:12,fontWeight:600,color:"#94A3B8"}}>(по важности)</span></div>
       {upcoming.length===0?(
         <div style={{textAlign:"center",padding:"24px",color:"#94A3B8",fontSize:14,fontWeight:700}}>Нет дедлайнов 🎉</div>
@@ -796,8 +862,6 @@ function CalView({goals}) {
     </div>
   );
 }
-
-/* ── StatsPage ── */
 function StatsPage({goals,habits}) {
   const t=goals.length; const d=goals.filter(g=>g.done).length;
   const pct=t>0?Math.round((d/t)*100):0;
@@ -1045,8 +1109,12 @@ export default function App() {
   const [editG,setEditG]=useState(null);
   const [openGId,setOpenGId]=useState(null);
   const [filt,setFilt]=useState("all");
+  const [prioFilt,setPrioFilt]=useState("all");
+  const [calTasks,setCalTasks]=useState([]);
   const [search,setSearch]=useState("");
   const [confetti,setConfetti]=useState(false);
+
+  useEffect(()=>{api.getCalendar().then(setCalTasks).catch(()=>setCalTasks([]));},[]);
 
   useEffect(()=>{loadData().then(d=>{setData(d);setReady(true);});},[]);
 
@@ -1088,6 +1156,7 @@ export default function App() {
     if(filt==="active")l=l.filter(g=>!g.done);
     else if(filt==="done")l=l.filter(g=>g.done);
     else if(filt==="overdue")l=l.filter(g=>!g.done&&g.deadline&&daysLeft(g.deadline)<0);
+    if(prioFilt!=="all")l=l.filter(g=>g.prio===prioFilt);
     if(search.trim())l=l.filter(g=>g.title.toLowerCase().includes(search.toLowerCase()));
     const prioN={high:0,medium:1,low:2};
     l.sort((a,b)=>{
@@ -1100,14 +1169,14 @@ export default function App() {
       return 0;
     });
     return l;
-  },[goals,filt,search]);
+  },[goals,filt,prioFilt,search]);
 
   const tabs=[
+    {id:"cal",    emoji:"📅",label:"Календарь"},
     {id:"goals",  emoji:"🎯",label:"Цели"},
     {id:"habits", emoji:"🔄",label:"Привычки"},
     {id:"wishes", emoji:"💫",label:"Желания"},
-    {id:"cal",    emoji:"📅",label:"Календарь"},
-    {id:"stats",  emoji:"📊",label:"Обзор"},
+    {id:"deadlines", emoji:"⏰",label:"Дедлайны"},
     {id:"ideas",  emoji:"💡",label:"Идеи"},
   ];
 
@@ -1172,6 +1241,11 @@ export default function App() {
                   <button key={f.id} onClick={()=>setFilt(f.id)} style={{padding:"8px 16px",borderRadius:50,border:"none",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",background:filt===f.id?"#6366F1":"#fff",color:filt===f.id?"#fff":"#94A3B8",boxShadow:filt===f.id?"0 2px 10px rgba(99,102,241,.3)":"0 1px 4px rgba(0,0,0,.05)",transition:"all .2s"}}>{f.l}</button>
                 ))}
               </div>
+              <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:2}}>
+                {[{id:"all",l:"Все приоритеты"},{id:"high",l:"Важно",c:"#EF4444"},{id:"medium",l:"Средне",c:"#F59E0B"},{id:"low",l:"Не срочно",c:"#22C55E"}].map(p=>(
+                  <button key={p.id} onClick={()=>setPrioFilt(p.id)} style={{padding:"8px 16px",borderRadius:50,border:"none",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",background:prioFilt===p.id?(p.c||"#6366F1"):"#fff",color:prioFilt===p.id?"#fff":"#94A3B8",boxShadow:prioFilt===p.id?"0 2px 10px rgba(99,102,241,.3)":"0 1px 4px rgba(0,0,0,.05)",transition:"all .2s"}}>{p.l}</button>
+                ))}
+              </div>
             </div>
             {filtered.length===0?(
               <div style={{textAlign:"center",padding:"60px 20px"}}>
@@ -1186,9 +1260,9 @@ export default function App() {
         )}
         {tab==="habits"&&<HabitsPage habits={habits} onUpdate={setHabits}/>}
         {tab==="wishes"&&<WishesPage wishes={wishes} onUpdate={setWishes}/>}
-        {tab==="cal"&&<CalView goals={goals}/>}
-        {tab==="stats"&&<StatsPage goals={goals} habits={habits}/>}
-        {tab==="ideas"&&<IdeasPage onMakeGoal={idea=>{setTab("goals");setEditG({id:uid(),title:idea.title,desc:idea.note||"",cat:"work",prio:"medium",deadline:"",reward:"",tasks:[],notif:{enabled:false,freq:"daily",time:"09:00",day:"mon"},done:false,created:new Date().toISOString()});setSheet(true);}}/>}
+        {tab==="cal"&&<CalView goals={goals} calTasks={calTasks} setCalTasks={setCalTasks}/>}
+        {tab==="deadlines"&&<DeadlinesView goals={goals}/>}
+        {tab==="ideas"&&<IdeasPage onMakeGoal={idea=>{setTab("goals");setEditG({id:uid(),title:idea.title,desc:idea.note||"",cat:"work",prio:"medium",deadline:"",reward:"",tasks:[],done:false,created:new Date().toISOString()});setSheet(true);}}/>}
       </div>
 
       {/* Bottom Nav */}

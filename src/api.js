@@ -38,6 +38,12 @@ const api = {
   createWish: (data) => request("/api/wishes", { method: "POST", body: JSON.stringify(data) }),
   updateWish: (id, data) => request(`/api/wishes/${id}`, { method: "PUT", body: JSON.stringify(data) }),
   deleteWish: (id) => request(`/api/wishes/${id}`, { method: "DELETE" }),
+
+  // Calendar tasks
+  getCalendar: () => request("/api/calendar"),
+  createCalendar: (data) => request("/api/calendar", { method: "POST", body: JSON.stringify(data) }),
+  updateCalendar: (id, data) => request(`/api/calendar/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+  deleteCalendar: (id) => request(`/api/calendar/${id}`, { method: "DELETE" }),
 };
 
 export default api;
