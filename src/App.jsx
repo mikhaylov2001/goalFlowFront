@@ -1172,8 +1172,8 @@ export default function App() {
   },[goals,filt,prioFilt,search]);
 
   const tabs=[
-    {id:"cal",    emoji:"📅",label:"Календарь"},
     {id:"goals",  emoji:"🎯",label:"Цели"},
+    {id:"cal",    emoji:"📅",label:"Календарь"},
     {id:"habits", emoji:"🔄",label:"Привычки"},
     {id:"wishes", emoji:"💫",label:"Желания"},
     {id:"deadlines", emoji:"⏰",label:"Дедлайны"},
