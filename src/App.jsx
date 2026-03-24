@@ -750,10 +750,11 @@ function CalView({goals,calTasks,setCalTasks}) {
   return (
     <div>
       <div style={{background:"linear-gradient(135deg,#8B5CF6,#7C3AED)",borderRadius:22,padding:"16px 20px",marginBottom:14,color:"#fff"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,flexWrap:"wrap"}}>
           <button onClick={()=>setCur(new Date(y,m-1,1))} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"#fff",fontSize:18,cursor:"pointer",padding:"8px 14px",borderRadius:12,backdropFilter:"blur(8px)"}}>◀</button>
           <span style={{fontWeight:900,fontSize:18}}>{MO_NAMES[m]} {y}</span>
           <button onClick={()=>setCur(new Date(y,m+1,1))} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"#fff",fontSize:18,cursor:"pointer",padding:"8px 14px",borderRadius:12,backdropFilter:"blur(8px)"}}>▶</button>
+          <button onClick={()=>{setSelectedDate(today);setSheet(true);}} style={{background:"#fff",color:"#4F46E5",fontSize:13,fontWeight:700,padding:"8px 12px",borderRadius:12,border:"none",cursor:"pointer"}}>＋ Добавить задачу</button>
         </div>
       </div>
 
