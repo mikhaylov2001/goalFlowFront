@@ -1108,6 +1108,7 @@ export default function App() {
   const [filt,setFilt]=useState("all");
   const [prioFilt,setPrioFilt]=useState("all");
   const [prioOpen,setPrioOpen]=useState(false);
+  const [filtOpen,setFiltOpen]=useState(false);
   const [calTasks,setCalTasks]=useState([]);
   const [search,setSearch]=useState("");
   const [confetti,setConfetti]=useState(false);
@@ -1234,24 +1235,36 @@ export default function App() {
                   style={{...S.field,paddingLeft:42}}/>
                 <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,pointerEvents:"none"}}>🔍</span>
               </div>
-              <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:2,flexWrap:"nowrap",alignItems:"center"}}>
-                {[{id:"all",l:"Все"},{id:"active",l:"Активные"},{id:"done",l:"Готово ✓"},{id:"overdue",l:"Просрочено"}].map(f=>(
-                  <button key={f.id} onClick={()=>setFilt(f.id)} style={{padding:"8px 16px",borderRadius:50,border:"none",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",background:filt===f.id?"#6366F1":"#fff",color:filt===f.id?"#fff":"#94A3B8",boxShadow:filt===f.id?"0 2px 10px rgba(99,102,241,.3)":"0 1px 4px rgba(0,0,0,.05)",transition:"all .2s"}}>{f.l}</button>
-                ))}
-              </div>
-              {/* Priority dropdown */}
-              <div style={{marginTop:6}}>
-                <button onClick={()=>setPrioOpen(o=>!o)} style={{display:"flex",alignItems:"center",gap:6,padding:"8px 14px",borderRadius:50,border:"none",fontSize:12,fontWeight:700,cursor:"pointer",background:prioFilt!=="all"?({high:"#EF4444",medium:"#F59E0B",low:"#22C55E"}[prioFilt]):"#fff",color:prioFilt!=="all"?"#fff":"#64748B",boxShadow:"0 1px 4px rgba(0,0,0,.08)",transition:"all .2s"}}>
-                  <span>{prioFilt==="all"?"Все приоритеты":prioFilt==="high"?"⚡ Важно":prioFilt==="medium"?"🟡 Средне":"✅ Не срочно"}</span>
-                  <span style={{fontSize:10,opacity:.7,transform:prioOpen?"rotate(180deg)":"rotate(0deg)",transition:"transform .2s",display:"inline-block"}}>▼</span>
-                </button>
-                {prioOpen&&(
-                  <div style={{display:"flex",gap:6,marginTop:6,animation:"fadeIn .15s ease"}}>
-                    {[{id:"all",l:"Все",c:null},{id:"high",l:"⚡ Важно",c:"#EF4444"},{id:"medium",l:"🟡 Средне",c:"#F59E0B"},{id:"low",l:"✅ Не срочно",c:"#22C55E"}].map(p=>(
-                      <button key={p.id} onClick={()=>{setPrioFilt(p.id);setPrioOpen(false);}} style={{padding:"7px 12px",borderRadius:50,border:`2px solid ${p.c||"#6366F1"}`,fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",background:prioFilt===p.id?(p.c||"#6366F1"):(p.c?p.c+"15":"#EEF2FF"),color:prioFilt===p.id?"#fff":(p.c||"#6366F1"),transition:"all .15s"}}>{p.l}</button>
-                    ))}
-                  </div>
-                )}
+              {/* Two dropdowns in one row */}
+              <div style={{display:"flex",gap:8,marginBottom:6}}>
+                {/* Status dropdown */}
+                <div style={{flex:1,position:"relative"}}>
+                  <button onClick={()=>{setFiltOpen(o=>!o);setPrioOpen(false);}} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",gap:6,padding:"10px 14px",borderRadius:14,border:"none",fontSize:13,fontWeight:700,cursor:"pointer",background:filt!=="all"?"#6366F1":"#fff",color:filt!=="all"?"#fff":"#64748B",boxShadow:"0 1px 6px rgba(0,0,0,.08)",transition:"all .2s"}}>
+                    <span>{filt==="all"?"Все":filt==="active"?"Активные":filt==="done"?"Готово ✓":"Просрочено"}</span>
+                    <span style={{fontSize:10,opacity:.7,transform:filtOpen?"rotate(180deg)":"rotate(0deg)",transition:"transform .2s",display:"inline-block"}}>▼</span>
+                  </button>
+                  {filtOpen&&(
+                    <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,right:0,background:"#fff",borderRadius:14,boxShadow:"0 8px 24px rgba(0,0,0,.12)",zIndex:200,overflow:"hidden",animation:"fadeIn .15s ease"}}>
+                      {[{id:"all",l:"Все"},{id:"active",l:"Активные"},{id:"done",l:"Готово ✓"},{id:"overdue",l:"Просрочено"}].map(f=>(
+                        <button key={f.id} onClick={()=>{setFilt(f.id);setFiltOpen(false);}} style={{width:"100%",padding:"11px 14px",border:"none",fontSize:13,fontWeight:700,cursor:"pointer",textAlign:"left",background:filt===f.id?"#EEF2FF":"#fff",color:filt===f.id?"#6366F1":"#64748B",borderBottom:"1px solid #F8FAFC"}}>{f.l}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {/* Priority dropdown */}
+                <div style={{flex:1,position:"relative"}}>
+                  <button onClick={()=>{setPrioOpen(o=>!o);setFiltOpen(false);}} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",gap:6,padding:"10px 14px",borderRadius:14,border:"none",fontSize:13,fontWeight:700,cursor:"pointer",background:prioFilt!=="all"?({high:"#EF4444",medium:"#F59E0B",low:"#22C55E"}[prioFilt]):"#fff",color:prioFilt!=="all"?"#fff":"#64748B",boxShadow:"0 1px 6px rgba(0,0,0,.08)",transition:"all .2s"}}>
+                    <span>{prioFilt==="all"?"Приоритет":prioFilt==="high"?"⚡ Важно":prioFilt==="medium"?"🟡 Средне":"✅ Не срочно"}</span>
+                    <span style={{fontSize:10,opacity:.7,transform:prioOpen?"rotate(180deg)":"rotate(0deg)",transition:"transform .2s",display:"inline-block"}}>▼</span>
+                  </button>
+                  {prioOpen&&(
+                    <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,right:0,background:"#fff",borderRadius:14,boxShadow:"0 8px 24px rgba(0,0,0,.12)",zIndex:200,overflow:"hidden",animation:"fadeIn .15s ease"}}>
+                      {[{id:"all",l:"Все"},{id:"high",l:"⚡ Важно"},{id:"medium",l:"🟡 Средне"},{id:"low",l:"✅ Не срочно"}].map(p=>(
+                        <button key={p.id} onClick={()=>{setPrioFilt(p.id);setPrioOpen(false);}} style={{width:"100%",padding:"11px 14px",border:"none",fontSize:13,fontWeight:700,cursor:"pointer",textAlign:"left",background:prioFilt===p.id?"#EEF2FF":"#fff",color:prioFilt===p.id?"#6366F1":"#64748B",borderBottom:"1px solid #F8FAFC"}}>{p.l}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             {filtered.length===0?(
@@ -1273,7 +1286,7 @@ export default function App() {
       </div>
 
       {/* Bottom Nav */}
-      <div className="bottom-nav" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#fff",borderTop:"1px solid #F1F5F9",display:"flex",justifyContent:"space-around",paddingTop:10,zIndex:100,boxShadow:"0 -4px 24px rgba(0,0,0,0.07)"}}>
+      <div className="bottom-nav" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#fff",borderTop:"1px solid #F1F5F9",display:"flex",justifyContent:"space-around",paddingTop:10,paddingBottom:"max(20px, env(safe-area-inset-bottom, 20px))",zIndex:100,boxShadow:"0 -4px 24px rgba(0,0,0,0.07)"}}>
         {tabs.map(t=>{
           const active=tab===t.id;
           return(
