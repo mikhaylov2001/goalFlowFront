@@ -697,7 +697,8 @@ function WishForm({wish,onSave,onClose}) {
 /* ── CalendarView ── */
 function CalView({goals,calTasks,setCalTasks}) {
   const [cur,setCur]=useState(new Date());
-  const [priorityFilter,setPriorityFilter]=useState("all");
+  const [prioFilter,setPrioFilter]=useState("all");
+  const [prioOpen,setPrioOpen]=useState(false);
   const y=cur.getFullYear(); const m=cur.getMonth();
   const days=monthDays(y,m); const today=new Date();
   const gmap=useMemo(()=>{const mp={};goals.forEach(g=>{if(g.deadline)(mp[g.deadline]=mp[g.deadline]||[]).push(g);});return mp;},[goals]);
@@ -706,28 +707,42 @@ function CalView({goals,calTasks,setCalTasks}) {
   const [newTask,setNewTask]=useState("");
   const [newPrio,setNewPrio]=useState("medium");
 
-  const tasksByDate = useMemo(()=>{
+  const tasksByDate=useMemo(()=>{
     const prioOrder={high:0,medium:1,low:2};
-    const map = {};
-    calTasks
-      .filter(t=>priorityFilter==="all"||t.prio===priorityFilter)
+    const map={};
+    [...calTasks]
       .sort((a,b)=>{
         if(a.date!==b.date) return a.date.localeCompare(b.date);
-        const pa=prioOrder[a.prio]||1; const pb=prioOrder[b.prio]||1;
-        if(pa!==pb) return pa-pb;
-        return a.title.localeCompare(b.title);
+        return (prioOrder[a.prio]||1)-(prioOrder[b.prio]||1);
       })
       .forEach(t=>{map[t.date]=map[t.date]||[];map[t.date].push(t);});
     return map;
-  },[calTasks,priorityFilter]);
+  },[calTasks]);
+
+  const filteredByDate=useMemo(()=>{
+    if(prioFilter==="all") return tasksByDate;
+    const map={};
+    Object.entries(tasksByDate).forEach(([date,tasks])=>{
+      const f=tasks.filter(t=>t.prio===prioFilter);
+      if(f.length>0) map[date]=f;
+    });
+    return map;
+  },[tasksByDate,prioFilter]);
+
+  const openSheet=(date)=>{
+    setSelectedDate(date instanceof Date ? date : new Date(date));
+    setNewTask("");
+    setNewPrio("medium");
+    setSheet(true);
+  };
 
   const addTask=async()=>{
-    if(!newTask.trim()||!selectedDate)return;
+    if(!newTask.trim()||!selectedDate) return;
     const dk=dateKey(selectedDate);
     try{
-      const res = await api.createCalendar({title:newTask.trim(),date:dk,prio:newPrio});
+      const res=await api.createCalendar({title:newTask.trim(),date:dk,prio:newPrio});
       setCalTasks(prev=>[...prev,{id:res.id,title:newTask.trim(),date:dk,done:false,prio:newPrio}]);
-      setNewTask("");setNewPrio("medium");setSheet(false);setSelectedDate(null);
+      setNewTask(""); setNewPrio("medium"); setSheet(false); setSelectedDate(null);
     }catch(e){console.error(e);}
   };
 
@@ -738,25 +753,56 @@ function CalView({goals,calTasks,setCalTasks}) {
     }catch(e){console.error(e);}
   };
 
+  const deleteTask=async(tid)=>{
+    try{
+      await api.deleteCalendar(tid);
+      setCalTasks(prev=>prev.filter(t=>t.id!==tid));
+    }catch(e){console.error(e);}
+  };
+
+  // Upcoming days: today + tomorrow + any future days with tasks (up to 7 days)
+  const upcomingDays=useMemo(()=>{
+    const shown=new Set([0,1]);
+    for(let i=2;i<=7;i++){
+      const d=new Date(); d.setDate(d.getDate()+i);
+      if(filteredByDate[dateKey(d)]?.length>0) shown.add(i);
+    }
+    return Array.from(shown).sort((a,b)=>a-b);
+  },[filteredByDate]);
+
+  const prioColors={high:"#EF4444",medium:"#F59E0B",low:"#22C55E"};
+  const prioLabel={all:"Приоритет",high:"⚡ Важно",medium:"🟡 Средне",low:"✅ Не срочно"};
+
   return (
     <div>
+      {/* Header */}
       <div style={{background:"linear-gradient(135deg,#8B5CF6,#7C3AED)",borderRadius:22,padding:"16px 20px",marginBottom:14,color:"#fff"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-          <button onClick={()=>setCur(new Date(y,m-1,1))} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"#fff",fontSize:18,cursor:"pointer",padding:"8px 14px",borderRadius:12,backdropFilter:"blur(8px)"}}>◀</button>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <button onClick={()=>setCur(new Date(y,m-1,1))} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"#fff",fontSize:18,cursor:"pointer",padding:"8px 14px",borderRadius:12}}>◀</button>
           <span style={{fontWeight:900,fontSize:18}}>{MO_NAMES[m]} {y}</span>
-          <button onClick={()=>setCur(new Date(y,m+1,1))} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"#fff",fontSize:18,cursor:"pointer",padding:"8px 14px",borderRadius:12,backdropFilter:"blur(8px)"}}>▶</button>
+          <button onClick={()=>setCur(new Date(y,m+1,1))} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"#fff",fontSize:18,cursor:"pointer",padding:"8px 14px",borderRadius:12}}>▶</button>
         </div>
-        <button onClick={()=>{setSelectedDate(new Date());setSheet(true);}} style={{marginTop:10,width:"100%",background:"rgba(255,255,255,0.18)",color:"#fff",fontSize:14,fontWeight:700,padding:"11px 16px",borderRadius:14,border:"1.5px solid rgba(255,255,255,0.3)",cursor:"pointer",backdropFilter:"blur(8px)",textAlign:"center",letterSpacing:"0.01em"}}>
+        <button onClick={()=>openSheet(new Date())} style={{width:"100%",background:"rgba(255,255,255,0.2)",color:"#fff",fontSize:14,fontWeight:700,padding:"11px 0",borderRadius:14,border:"1.5px solid rgba(255,255,255,0.35)",cursor:"pointer"}}>
           ＋ Добавить задачу
         </button>
       </div>
 
-      <div style={{display:"flex",gap:8,marginBottom:12}}>
-        {[{id:"all",l:"Все"},{id:"high",l:"Важные"},{id:"medium",l:"Средние"},{id:"low",l:"Низкие"}].map(p=>(
-          <button key={p.id} onClick={()=>setPriorityFilter(p.id)} style={{padding:"8px 14px",borderRadius:50,border:"none",background:priorityFilter===p.id?"#6366F1":"#fff",color:priorityFilter===p.id?"#fff":"#94A3B8",fontSize:12,fontWeight:700,cursor:"pointer"}}>{p.l}</button>
-        ))}
+      {/* Priority filter dropdown */}
+      <div style={{position:"relative",marginBottom:12,display:"inline-block"}}>
+        <button onClick={()=>setPrioOpen(o=>!o)} style={{display:"flex",alignItems:"center",gap:6,padding:"9px 16px",borderRadius:14,border:"none",fontSize:13,fontWeight:700,cursor:"pointer",background:prioFilter!=="all"?prioColors[prioFilter]:"#fff",color:prioFilter!=="all"?"#fff":"#64748B",boxShadow:"0 1px 6px rgba(0,0,0,.08)"}}>
+          <span>{prioLabel[prioFilter]}</span>
+          <span style={{fontSize:10,opacity:.7,display:"inline-block",transform:prioOpen?"rotate(180deg)":"rotate(0)",transition:"transform .2s"}}>▼</span>
+        </button>
+        {prioOpen&&(
+          <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,background:"#fff",borderRadius:14,boxShadow:"0 8px 24px rgba(0,0,0,.12)",zIndex:200,overflow:"hidden",minWidth:160}}>
+            {[{id:"all",l:"Все"},{id:"high",l:"⚡ Важно"},{id:"medium",l:"🟡 Средне"},{id:"low",l:"✅ Не срочно"}].map(p=>(
+              <button key={p.id} onClick={()=>{setPrioFilter(p.id);setPrioOpen(false);}} style={{width:"100%",padding:"11px 16px",border:"none",fontSize:13,fontWeight:700,cursor:"pointer",textAlign:"left",background:prioFilter===p.id?"#EEF2FF":"#fff",color:prioFilter===p.id?"#6366F1":"#64748B",borderBottom:"1px solid #F8FAFC"}}>{p.l}</button>
+            ))}
+          </div>
+        )}
       </div>
 
+      {/* Calendar grid */}
       <div style={{background:"#fff",borderRadius:22,padding:"14px 12px",boxShadow:"0 2px 14px rgba(0,0,0,0.06)",marginBottom:14}}>
         <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:8}}>
           {WEEKDAYS.map(d=><div key={d} style={{textAlign:"center",fontSize:10,fontWeight:800,color:"#94A3B8",padding:4}}>{d}</div>)}
@@ -764,45 +810,53 @@ function CalView({goals,calTasks,setCalTasks}) {
         <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3}}>
           {days.map(({d,cur:cm},i)=>{
             const k=dateKey(d); const dg=gmap[k]||[]; const td=sameDay(d,today);
-            const ct=tasksByDate[k]||[];
+            const ct=filteredByDate[k]||[];
+            const hasItems=dg.length+ct.length>0;
             return (
-              <div key={i} onClick={()=>{setSelectedDate(d);setSheet(true);}} style={{minHeight:48,padding:4,borderRadius:12,background:td?"#EEF2FF":cm?"#FAFAFA":"transparent",border:td?"2px solid #6366F1":"2px solid transparent",opacity:cm?1:.2,cursor:"pointer"}}>
+              <div key={i} onClick={()=>openSheet(d)} style={{minHeight:48,padding:4,borderRadius:12,background:td?"#EEF2FF":cm?"#FAFAFA":"transparent",border:td?"2px solid #6366F1":"2px solid transparent",opacity:cm?1:.25,cursor:"pointer"}}>
                 <div style={{fontSize:11,fontWeight:td?900:600,color:td?"#6366F1":"#64748B",marginBottom:2}}>{d.getDate()}</div>
-                {dg.slice(0,2).map(g=>{
+                {dg.slice(0,1).map(g=>{
                   const cat=CATS.find(c=>c.id===g.cat);
-                  return <div key={g.id} style={{fontSize:8,padding:"1px 4px",borderRadius:4,marginBottom:1,background:cat?.accent+"20",color:cat?.accent,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textDecoration:g.done?"line-through":"none"}}>{g.title}</div>;
+                  return <div key={g.id} style={{fontSize:8,padding:"1px 4px",borderRadius:4,marginBottom:1,background:cat?.accent+"20",color:cat?.accent,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{g.title}</div>;
                 })}
-                {ct.slice(0,2).map(t=>{
+                {ct.slice(0,1).map(t=>{
                   const pr=TPRIO.find(x=>x.id===t.prio)||TPRIO[1];
-                  return <div key={t.id} style={{fontSize:8,padding:"1px 4px",borderRadius:4,marginBottom:1,background:t.done?"#10B98120":pr.c+"20",color:t.done?"#10B981":pr.c,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textDecoration:t.done?"line-through":"none"}}>{t.title}</div>;
+                  return <div key={t.id} style={{fontSize:8,padding:"1px 4px",borderRadius:4,marginBottom:1,background:pr.c+"20",color:pr.c,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textDecoration:t.done?"line-through":"none"}}>{t.title}</div>;
                 })}
-                {dg.length+ct.length>2&&<div style={{fontSize:8,color:"#94A3B8",fontWeight:700}}>+{dg.length+ct.length-2}</div>}
+                {dg.length+ct.length>1&&<div style={{fontSize:8,color:"#94A3B8",fontWeight:700}}>+{dg.length+ct.length-1}</div>}
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Tasks for today, tomorrow, etc. */}
+      {/* Upcoming days */}
       <div style={{fontWeight:900,fontSize:16,marginBottom:12}}>📅 Задачи на ближайшие дни</div>
-      {["today","tomorrow","dayAfter"].map((key,i)=>{
+      {upcomingDays.map(i=>{
         const d=new Date(); d.setDate(d.getDate()+i);
         const dk=dateKey(d);
-        const tasks=tasksByDate[dk]||[];
+        const tasks=filteredByDate[dk]||[];
+        const label=i===0?"Сегодня":i===1?"Завтра":fmtDate(d);
         return (
-          <div key={key} style={{marginBottom:16}}>
-            <div style={{fontSize:14,fontWeight:700,color:"#64748B",marginBottom:8}}>{i===0?"Сегодня":i===1?"Завтра":"Послезавтра"} ({fmtDate(d)})</div>
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+              <span style={{fontSize:14,fontWeight:800,color:"#0F172A"}}>{label}</span>
+              <button onClick={()=>openSheet(d)} style={{fontSize:11,fontWeight:700,color:"#6366F1",background:"#EEF2FF",border:"none",borderRadius:8,padding:"4px 10px",cursor:"pointer"}}>＋</button>
+            </div>
             {tasks.length===0?(
-              <div style={{textAlign:"center",padding:"12px",color:"#CBD5E1",fontSize:13}}>Нет задач</div>
+              <div style={{textAlign:"center",padding:"10px",color:"#CBD5E1",fontSize:13}}>Нет задач</div>
             ):(
               <div style={{display:"flex",flexDirection:"column",gap:6}}>
                 {tasks.map(t=>{
+                  const pr=TPRIO.find(x=>x.id===t.prio)||TPRIO[1];
                   return (
-                    <div key={t.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:14,background:"#fff",boxShadow:"0 1px 6px rgba(0,0,0,0.05)"}}>
-                      <div onClick={()=>toggleTask(t.id,t.done)} style={{width:24,height:24,borderRadius:8,border:"2px solid #E2E8F0",background:t.done?"#10B981":"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14,fontWeight:900}}>
+                    <div key={t.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:14,background:"#fff",boxShadow:"0 1px 6px rgba(0,0,0,0.05)",borderLeft:`3px solid ${t.done?"#10B981":pr.c}`}}>
+                      <div onClick={()=>toggleTask(t.id,t.done)} style={{width:24,height:24,borderRadius:8,flexShrink:0,border:`2px solid ${t.done?"#10B981":"#E2E8F0"}`,background:t.done?"#10B981":"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:12,fontWeight:900}}>
                         {t.done&&"✓"}
                       </div>
                       <span style={{flex:1,fontSize:14,textDecoration:t.done?"line-through":"none",color:t.done?"#94A3B8":"#0F172A"}}>{t.title}</span>
+                      <span style={{fontSize:10,fontWeight:700,color:pr.c,background:pr.c+"15",padding:"2px 8px",borderRadius:6,flexShrink:0}}>{pr.l}</span>
+                      <button onClick={()=>deleteTask(t.id)} style={{background:"none",border:"none",color:"#E2E8F0",fontSize:14,cursor:"pointer",padding:2,flexShrink:0}}>✕</button>
                     </div>
                   );
                 })}
@@ -812,8 +866,9 @@ function CalView({goals,calTasks,setCalTasks}) {
         );
       })}
 
+      {/* Add task sheet */}
       <Sheet open={sheet} onClose={()=>{setSheet(false);setSelectedDate(null);setNewTask("");setNewPrio("medium");}} title={`Задача на ${selectedDate?fmtDate(selectedDate):""}`}>
-        <input value={newTask} onChange={e=>setNewTask(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addTask()} placeholder="Название задачи..."
+        <input value={newTask} onChange={e=>setNewTask(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addTask()} placeholder="Название задачи..." autoFocus
           style={{width:"100%",padding:"14px 16px",borderRadius:18,border:"2px solid #F1F5F9",fontSize:15,outline:"none",background:"#fff",color:"#0F172A",boxSizing:"border-box",marginBottom:12}}/>
         <div style={{display:"flex",gap:8,marginBottom:16}}>
           {TPRIO.map(p=>(
