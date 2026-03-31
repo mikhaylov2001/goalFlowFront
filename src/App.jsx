@@ -97,11 +97,11 @@ const CSS_GLOBAL = `
   input,textarea,select,button { font-family:'Nunito',-apple-system,sans-serif;font-size:16px; }
   input:focus,textarea:focus { border-color:#6366F1 !important; }
   .bottom-nav {
-    padding-bottom: env(safe-area-inset-bottom, 16px);
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    padding-bottom: 24px;
+    padding-bottom: env(safe-area-inset-bottom);
   }
   .app-wrap {
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);
+    padding-bottom: 100px;
   }
 `;
 
@@ -1286,17 +1286,20 @@ export default function App() {
       </div>
 
       {/* Bottom Nav */}
-      <div className="bottom-nav" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#fff",borderTop:"1px solid #F1F5F9",display:"flex",justifyContent:"space-around",paddingTop:10,paddingBottom:"max(20px, env(safe-area-inset-bottom, 20px))",zIndex:100,boxShadow:"0 -4px 24px rgba(0,0,0,0.07)"}}>
-        {tabs.map(t=>{
-          const active=tab===t.id;
-          return(
-            <button key={t.id} onClick={()=>setTab(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:active?"#EEF2FF":"none",border:"none",cursor:"pointer",padding:"6px 10px",borderRadius:16,minWidth:0,transition:"background .2s",flex:1}}>
-              <span style={{fontSize:20,filter:active?"none":"grayscale(60%)",opacity:active?1:.5,transform:active?"scale(1.1)":"scale(1)",transition:"all .2s",display:"block"}}>{t.emoji}</span>
-              <span style={{fontSize:10,fontWeight:active?800:600,color:active?"#6366F1":"#94A3B8",transition:"color .2s",whiteSpace:"nowrap"}}>{t.label}</span>
-              {active&&<div style={{width:20,height:3,borderRadius:2,background:"#6366F1",marginTop:1}}/>}
-            </button>
-          );
-        })}
+      <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#fff",borderTop:"1px solid #F1F5F9",zIndex:100,boxShadow:"0 -4px 24px rgba(0,0,0,0.07)"}}>
+        <div style={{display:"flex",justifyContent:"space-around",paddingTop:8,paddingBottom:8}}>
+          {tabs.map(t=>{
+            const active=tab===t.id;
+            return(
+              <button key={t.id} onClick={()=>setTab(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:active?"#EEF2FF":"none",border:"none",cursor:"pointer",padding:"6px 10px",borderRadius:16,minWidth:0,transition:"background .2s",flex:1}}>
+                <span style={{fontSize:20,filter:active?"none":"grayscale(60%)",opacity:active?1:.5,transform:active?"scale(1.1)":"scale(1)",transition:"all .2s",display:"block"}}>{t.emoji}</span>
+                <span style={{fontSize:10,fontWeight:active?800:600,color:active?"#6366F1":"#94A3B8",transition:"color .2s",whiteSpace:"nowrap"}}>{t.label}</span>
+                {active&&<div style={{width:20,height:3,borderRadius:2,background:"#6366F1",marginTop:1}}/>}
+              </button>
+            );
+          })}
+        </div>
+        <div style={{height:"env(safe-area-inset-bottom, 0px)",background:"#fff"}}/>
       </div>
 
       <Sheet open={sheet} onClose={()=>{setSheet(false);setEditG(null);}} title={editG?"Редактировать цель":"Новая цель 🎯"}>
