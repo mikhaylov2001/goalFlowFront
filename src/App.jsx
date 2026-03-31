@@ -97,20 +97,11 @@ const CSS_GLOBAL = `
   input,textarea,select,button { font-family:'Nunito',-apple-system,sans-serif;font-size:16px; }
   input:focus,textarea:focus { border-color:#6366F1 !important; }
   .bottom-nav {
-    padding-bottom: 20px;
-  }
-  @supports (padding-bottom: env(safe-area-inset-bottom)) {
-    .bottom-nav {
-      padding-bottom: calc(env(safe-area-inset-bottom) + 8px);
-    }
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
   }
   .app-wrap {
-    padding-bottom: 100px;
-  }
-  @supports (padding-bottom: env(safe-area-inset-bottom)) {
-    .app-wrap {
-      padding-bottom: calc(env(safe-area-inset-bottom) + 85px);
-    }
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);
   }
 `;
 
@@ -213,15 +204,15 @@ function GoalForm({goal,onSave,onClose}) {
       </div>
 
       <div style={{display:"flex",gap:8,marginBottom:14}}>
-        <div style={{flex:1,minWidth:0}}>
+        <div style={{flex:"1 1 0",minWidth:0}}>
           <label style={S.lbl}>Дедлайн 📅</label>
           <input type="date" value={f.deadline} onChange={e=>u("deadline",e.target.value)}
-            style={{width:"100%",height:50,padding:"0 10px",borderRadius:16,border:"1.5px solid #E8EDF5",fontSize:13,outline:"none",background:"#fff",color:"#0F172A",boxSizing:"border-box"}}/>
+            style={{width:"100%",height:50,padding:"0 8px",borderRadius:16,border:"1.5px solid #E8EDF5",fontSize:13,outline:"none",background:"#fff",color:"#0F172A",boxSizing:"border-box",fontFamily:"inherit"}}/>
         </div>
-        <div style={{flex:1,minWidth:0}}>
+        <div style={{flex:"1 1 0",minWidth:0}}>
           <label style={S.lbl}>Награда 🎁</label>
           <input value={f.reward} onChange={e=>u("reward",e.target.value)} placeholder="За победу!"
-            style={{width:"100%",height:50,padding:"0 10px",borderRadius:16,border:"1.5px solid #E8EDF5",fontSize:14,outline:"none",background:"#fff",color:"#0F172A",boxSizing:"border-box"}}/>
+            style={{width:"100%",height:50,padding:"0 8px",borderRadius:16,border:"1.5px solid #E8EDF5",fontSize:14,outline:"none",background:"#fff",color:"#0F172A",boxSizing:"border-box",fontFamily:"inherit"}}/>
         </div>
       </div>
 
@@ -755,7 +746,7 @@ function CalView({goals,calTasks,setCalTasks}) {
           <span style={{fontWeight:900,fontSize:18}}>{MO_NAMES[m]} {y}</span>
           <button onClick={()=>setCur(new Date(y,m+1,1))} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"#fff",fontSize:18,cursor:"pointer",padding:"8px 14px",borderRadius:12,backdropFilter:"blur(8px)"}}>▶</button>
         </div>
-        <button onClick={()=>{const t=new Date();setSelectedDate(t);setSheet(true);}} style={{marginTop:10,width:"100%",background:"rgba(255,255,255,0.2)",color:"#fff",fontSize:14,fontWeight:700,padding:"11px 16px",borderRadius:14,border:"1.5px solid rgba(255,255,255,0.35)",cursor:"pointer",backdropFilter:"blur(8px)",textAlign:"left"}}>
+        <button onClick={()=>{setSelectedDate(new Date());setSheet(true);}} style={{marginTop:10,width:"100%",background:"rgba(255,255,255,0.18)",color:"#fff",fontSize:14,fontWeight:700,padding:"11px 16px",borderRadius:14,border:"1.5px solid rgba(255,255,255,0.3)",cursor:"pointer",backdropFilter:"blur(8px)",textAlign:"center",letterSpacing:"0.01em"}}>
           ＋ Добавить задачу
         </button>
       </div>
@@ -822,14 +813,14 @@ function CalView({goals,calTasks,setCalTasks}) {
       })}
 
       <Sheet open={sheet} onClose={()=>{setSheet(false);setSelectedDate(null);setNewTask("");setNewPrio("medium");}} title={`Задача на ${selectedDate?fmtDate(selectedDate):""}`}>
-        <input value={newTask} onChange={e=>setNewTask(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addTask()} placeholder="Название задачи..." autoFocus
+        <input value={newTask} onChange={e=>setNewTask(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addTask()} placeholder="Название задачи..."
           style={{width:"100%",padding:"14px 16px",borderRadius:18,border:"2px solid #F1F5F9",fontSize:15,outline:"none",background:"#fff",color:"#0F172A",boxSizing:"border-box",marginBottom:12}}/>
         <div style={{display:"flex",gap:8,marginBottom:16}}>
           {TPRIO.map(p=>(
-            <button key={p.id} onClick={()=>setNewPrio(p.id)} style={{flex:1,padding:"9px 0",borderRadius:12,border:newPrio===p.id?`2px solid ${p.c}`:"2px solid #F1F5F9",background:newPrio===p.id?p.c+"18":"#FAFAFA",fontSize:12,fontWeight:700,cursor:"pointer",color:newPrio===p.id?p.c:"#B0B8C4",transition:"all .15s"}}>{p.e} {p.l}</button>
+            <button key={p.id} onClick={()=>setNewPrio(p.id)} style={{flex:1,padding:"10px 0",borderRadius:14,border:newPrio===p.id?`2px solid ${p.c}`:"2px solid #F1F5F9",background:newPrio===p.id?p.c+"18":"#FAFAFA",fontSize:12,fontWeight:700,cursor:"pointer",color:newPrio===p.id?p.c:"#B0B8C4",transition:"all .15s"}}>{p.e} {p.l}</button>
           ))}
         </div>
-        <button onClick={addTask} style={{width:"100%",padding:"17px 0",borderRadius:18,border:"none",background:newTask.trim()?"linear-gradient(135deg,#6366F1,#8B5CF6)":"#E2E8F0",color:newTask.trim()?"#fff":"#94A3B8",fontSize:16,fontWeight:800,cursor:newTask.trim()?"pointer":"default",transition:"all .2s"}}>
+        <button onClick={addTask} style={{width:"100%",padding:"17px 0",borderRadius:18,border:"none",background:newTask.trim()?"linear-gradient(135deg,#6366F1,#8B5CF6)":"#E2E8F0",color:newTask.trim()?"#fff":"#94A3B8",fontSize:16,fontWeight:800,cursor:newTask.trim()?"pointer":"default",boxShadow:newTask.trim()?"0 6px 20px rgba(99,102,241,.35)":"none",transition:"all .2s"}}>
           Добавить 🚀
         </button>
       </Sheet>
@@ -1116,6 +1107,7 @@ export default function App() {
   const [openGId,setOpenGId]=useState(null);
   const [filt,setFilt]=useState("all");
   const [prioFilt,setPrioFilt]=useState("all");
+  const [prioOpen,setPrioOpen]=useState(false);
   const [calTasks,setCalTasks]=useState([]);
   const [search,setSearch]=useState("");
   const [confetti,setConfetti]=useState(false);
@@ -1242,15 +1234,24 @@ export default function App() {
                   style={{...S.field,paddingLeft:42}}/>
                 <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,pointerEvents:"none"}}>🔍</span>
               </div>
-              <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:2}}>
+              <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:2,flexWrap:"nowrap",alignItems:"center"}}>
                 {[{id:"all",l:"Все"},{id:"active",l:"Активные"},{id:"done",l:"Готово ✓"},{id:"overdue",l:"Просрочено"}].map(f=>(
                   <button key={f.id} onClick={()=>setFilt(f.id)} style={{padding:"8px 16px",borderRadius:50,border:"none",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",background:filt===f.id?"#6366F1":"#fff",color:filt===f.id?"#fff":"#94A3B8",boxShadow:filt===f.id?"0 2px 10px rgba(99,102,241,.3)":"0 1px 4px rgba(0,0,0,.05)",transition:"all .2s"}}>{f.l}</button>
                 ))}
               </div>
-              <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:2,marginTop:6}}>
-                {[{id:"all",l:"Все приоритеты"},{id:"high",l:"⚡ Важно",c:"#EF4444"},{id:"medium",l:"● Средне",c:"#F59E0B"},{id:"low",l:"✓ Не срочно",c:"#22C55E"}].map(p=>(
-                  <button key={p.id} onClick={()=>setPrioFilt(p.id)} style={{padding:"7px 13px",borderRadius:50,border:`2px solid ${prioFilt===p.id?(p.c||"#6366F1"):"transparent"}`,fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",background:prioFilt===p.id?(p.c?p.c+"15":"#EEF2FF"):"#fff",color:prioFilt===p.id?(p.c||"#6366F1"):"#94A3B8",boxShadow:"0 1px 4px rgba(0,0,0,.05)",transition:"all .2s"}}>{p.l}</button>
-                ))}
+              {/* Priority dropdown */}
+              <div style={{marginTop:6}}>
+                <button onClick={()=>setPrioOpen(o=>!o)} style={{display:"flex",alignItems:"center",gap:6,padding:"8px 14px",borderRadius:50,border:"none",fontSize:12,fontWeight:700,cursor:"pointer",background:prioFilt!=="all"?({high:"#EF4444",medium:"#F59E0B",low:"#22C55E"}[prioFilt]):"#fff",color:prioFilt!=="all"?"#fff":"#64748B",boxShadow:"0 1px 4px rgba(0,0,0,.08)",transition:"all .2s"}}>
+                  <span>{prioFilt==="all"?"Все приоритеты":prioFilt==="high"?"⚡ Важно":prioFilt==="medium"?"🟡 Средне":"✅ Не срочно"}</span>
+                  <span style={{fontSize:10,opacity:.7,transform:prioOpen?"rotate(180deg)":"rotate(0deg)",transition:"transform .2s",display:"inline-block"}}>▼</span>
+                </button>
+                {prioOpen&&(
+                  <div style={{display:"flex",gap:6,marginTop:6,animation:"fadeIn .15s ease"}}>
+                    {[{id:"all",l:"Все",c:null},{id:"high",l:"⚡ Важно",c:"#EF4444"},{id:"medium",l:"🟡 Средне",c:"#F59E0B"},{id:"low",l:"✅ Не срочно",c:"#22C55E"}].map(p=>(
+                      <button key={p.id} onClick={()=>{setPrioFilt(p.id);setPrioOpen(false);}} style={{padding:"7px 12px",borderRadius:50,border:`2px solid ${p.c||"#6366F1"}`,fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",background:prioFilt===p.id?(p.c||"#6366F1"):(p.c?p.c+"15":"#EEF2FF"),color:prioFilt===p.id?"#fff":(p.c||"#6366F1"),transition:"all .15s"}}>{p.l}</button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
             {filtered.length===0?(
