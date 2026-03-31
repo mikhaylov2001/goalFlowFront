@@ -695,6 +695,40 @@ function WishForm({wish,onSave,onClose}) {
 }
 
 /* ── CalendarView ── */
+/* ── CalTaskItem ── */
+function CalTaskItem({t,pr,onToggle,onDelete,onUpdate}) {
+  const [editing,setEditing]=useState(false);
+  const [val,setVal]=useState(t.title);
+  const [prio,setPrio]=useState(t.prio);
+  const save=()=>{if(val.trim()){onUpdate(val.trim(),prio);}setEditing(false);};
+  if(editing) return(
+    <div style={{padding:"10px 14px",borderRadius:14,background:"#fff",boxShadow:"0 1px 6px rgba(0,0,0,0.05)",borderLeft:`3px solid ${pr.c}`}}>
+      <input autoFocus value={val} onChange={e=>setVal(e.target.value)} onKeyDown={e=>e.key==="Enter"&&save()}
+        style={{width:"100%",fontSize:14,fontWeight:700,border:"none",borderBottom:"2px solid #6366F1",outline:"none",padding:"2px 0",background:"transparent",marginBottom:8}}/>
+      <div style={{display:"flex",gap:6,marginBottom:8}}>
+        {TPRIO.map(p=>(
+          <button key={p.id} onClick={()=>setPrio(p.id)} style={{flex:1,padding:"6px 0",borderRadius:10,border:prio===p.id?`2px solid ${p.c}`:"2px solid #F1F5F9",background:prio===p.id?p.c+"18":"#FAFAFA",fontSize:11,fontWeight:700,cursor:"pointer",color:prio===p.id?p.c:"#B0B8C4"}}>{p.e} {p.l}</button>
+        ))}
+      </div>
+      <div style={{display:"flex",gap:8}}>
+        <button onClick={save} style={{flex:1,padding:"8px 0",borderRadius:10,border:"none",background:"linear-gradient(135deg,#6366F1,#8B5CF6)",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>Сохранить</button>
+        <button onClick={()=>setEditing(false)} style={{padding:"8px 14px",borderRadius:10,border:"none",background:"#F1F5F9",color:"#64748B",fontSize:13,fontWeight:700,cursor:"pointer"}}>Отмена</button>
+      </div>
+    </div>
+  );
+  return(
+    <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:14,background:"#fff",boxShadow:"0 1px 6px rgba(0,0,0,0.05)",borderLeft:`3px solid ${t.done?"#10B981":pr.c}`}}>
+      <div onClick={onToggle} style={{width:24,height:24,borderRadius:8,flexShrink:0,border:`2px solid ${t.done?"#10B981":"#E2E8F0"}`,background:t.done?"#10B981":"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:12,fontWeight:900}}>
+        {t.done&&"✓"}
+      </div>
+      <span onClick={()=>setEditing(true)} style={{flex:1,fontSize:14,textDecoration:t.done?"line-through":"none",color:t.done?"#94A3B8":"#0F172A",cursor:"text"}}>{t.title}</span>
+      <span style={{fontSize:10,fontWeight:700,color:pr.c,background:pr.c+"15",padding:"2px 8px",borderRadius:6,flexShrink:0}}>{pr.l}</span>
+      <button onClick={()=>setEditing(true)} style={{background:"none",border:"none",color:"#CBD5E1",fontSize:13,cursor:"pointer",padding:2,flexShrink:0}}>✏️</button>
+      <button onClick={onDelete} style={{background:"none",border:"none",color:"#E2E8F0",fontSize:14,cursor:"pointer",padding:2,flexShrink:0}}>✕</button>
+    </div>
+  );
+}
+
 function CalView({goals,calTasks,setCalTasks}) {
   const [cur,setCur]=useState(new Date());
   const [prioFilter,setPrioFilter]=useState("all");
@@ -760,6 +794,14 @@ function CalView({goals,calTasks,setCalTasks}) {
     }catch(e){console.error(e);}
   };
 
+  const updateTask=async(tid,title,prio)=>{
+    try{
+      await api.updateCalendar(tid,{title,prio});
+      setCalTasks(prev=>prev.map(t=>t.id===tid?{...t,title,prio}:t));
+    }catch(e){console.error(e);}
+  };
+  };
+
   // Upcoming days: today + tomorrow + any future days with tasks (up to 7 days)
   const upcomingDays=useMemo(()=>{
     const shown=new Set([0,1]);
@@ -811,19 +853,18 @@ function CalView({goals,calTasks,setCalTasks}) {
           {days.map(({d,cur:cm},i)=>{
             const k=dateKey(d); const dg=gmap[k]||[]; const td=sameDay(d,today);
             const ct=filteredByDate[k]||[];
-            const hasItems=dg.length+ct.length>0;
             return (
-              <div key={i} onClick={()=>openSheet(d)} style={{minHeight:48,padding:4,borderRadius:12,background:td?"#EEF2FF":cm?"#FAFAFA":"transparent",border:td?"2px solid #6366F1":"2px solid transparent",opacity:cm?1:.25,cursor:"pointer"}}>
-                <div style={{fontSize:11,fontWeight:td?900:600,color:td?"#6366F1":"#64748B",marginBottom:2}}>{d.getDate()}</div>
+              <div key={i} onClick={()=>openSheet(d)} style={{height:52,padding:"3px 3px",borderRadius:12,background:td?"#EEF2FF":cm?"#FAFAFA":"transparent",border:td?"2px solid #6366F1":"2px solid transparent",opacity:cm?1:.25,cursor:"pointer",overflow:"hidden"}}>
+                <div style={{fontSize:11,fontWeight:td?900:600,color:td?"#6366F1":"#64748B",marginBottom:1,lineHeight:1}}>{d.getDate()}</div>
                 {dg.slice(0,1).map(g=>{
                   const cat=CATS.find(c=>c.id===g.cat);
-                  return <div key={g.id} style={{fontSize:8,padding:"1px 4px",borderRadius:4,marginBottom:1,background:cat?.accent+"20",color:cat?.accent,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{g.title}</div>;
+                  return <div key={g.id} style={{fontSize:7,padding:"1px 3px",borderRadius:3,marginBottom:1,background:cat?.accent+"20",color:cat?.accent,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{g.title}</div>;
                 })}
                 {ct.slice(0,1).map(t=>{
                   const pr=TPRIO.find(x=>x.id===t.prio)||TPRIO[1];
-                  return <div key={t.id} style={{fontSize:8,padding:"1px 4px",borderRadius:4,marginBottom:1,background:pr.c+"20",color:pr.c,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textDecoration:t.done?"line-through":"none"}}>{t.title}</div>;
+                  return <div key={t.id} style={{fontSize:7,padding:"1px 3px",borderRadius:3,marginBottom:1,background:pr.c+"20",color:pr.c,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textDecoration:t.done?"line-through":"none"}}>{t.title}</div>;
                 })}
-                {dg.length+ct.length>1&&<div style={{fontSize:8,color:"#94A3B8",fontWeight:700}}>+{dg.length+ct.length-1}</div>}
+                {dg.length+ct.length>1&&<div style={{fontSize:7,color:"#94A3B8",fontWeight:700}}>+{dg.length+ct.length-1}</div>}
               </div>
             );
           })}
@@ -850,14 +891,7 @@ function CalView({goals,calTasks,setCalTasks}) {
                 {tasks.map(t=>{
                   const pr=TPRIO.find(x=>x.id===t.prio)||TPRIO[1];
                   return (
-                    <div key={t.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:14,background:"#fff",boxShadow:"0 1px 6px rgba(0,0,0,0.05)",borderLeft:`3px solid ${t.done?"#10B981":pr.c}`}}>
-                      <div onClick={()=>toggleTask(t.id,t.done)} style={{width:24,height:24,borderRadius:8,flexShrink:0,border:`2px solid ${t.done?"#10B981":"#E2E8F0"}`,background:t.done?"#10B981":"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:12,fontWeight:900}}>
-                        {t.done&&"✓"}
-                      </div>
-                      <span style={{flex:1,fontSize:14,textDecoration:t.done?"line-through":"none",color:t.done?"#94A3B8":"#0F172A"}}>{t.title}</span>
-                      <span style={{fontSize:10,fontWeight:700,color:pr.c,background:pr.c+"15",padding:"2px 8px",borderRadius:6,flexShrink:0}}>{pr.l}</span>
-                      <button onClick={()=>deleteTask(t.id)} style={{background:"none",border:"none",color:"#E2E8F0",fontSize:14,cursor:"pointer",padding:2,flexShrink:0}}>✕</button>
-                    </div>
+                    <CalTaskItem key={t.id} t={t} pr={pr} onToggle={()=>toggleTask(t.id,t.done)} onDelete={()=>deleteTask(t.id)} onUpdate={(title,prio)=>updateTask(t.id,title,prio)}/>
                   );
                 })}
               </div>
