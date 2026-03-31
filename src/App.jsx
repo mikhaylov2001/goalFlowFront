@@ -212,16 +212,16 @@ function GoalForm({goal,onSave,onClose}) {
         ))}
       </div>
 
-      <div style={{display:"flex",gap:10,marginBottom:14,alignItems:"flex-start"}}>
-        <div style={{flex:1}}>
+      <div style={{display:"flex",gap:8,marginBottom:14,alignItems:"flex-start"}}>
+        <div style={{flex:1,minWidth:0}}>
           <label style={S.lbl}>Дедлайн 📅</label>
           <input type="date" value={f.deadline} onChange={e=>u("deadline",e.target.value)}
-            style={{...S.field,height:52,padding:"0 12px",display:"block",width:"100%"}}/>
+            style={{...S.field,height:48,padding:"0 10px",display:"block",width:"100%",fontSize:14}}/>
         </div>
-        <div style={{flex:1}}>
+        <div style={{flex:1,minWidth:0}}>
           <label style={S.lbl}>Награда 🎁</label>
           <input value={f.reward} onChange={e=>u("reward",e.target.value)} placeholder="За победу!"
-            style={{...S.field,height:52,padding:"0 12px",display:"block",width:"100%"}}/>
+            style={{...S.field,height:48,padding:"0 10px",display:"block",width:"100%",fontSize:14}}/>
         </div>
       </div>
 
@@ -749,12 +749,14 @@ function CalView({goals,calTasks,setCalTasks}) {
   return (
     <div>
       <div style={{background:"linear-gradient(135deg,#8B5CF6,#7C3AED)",borderRadius:22,padding:"16px 20px",marginBottom:14,color:"#fff"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
           <button onClick={()=>setCur(new Date(y,m-1,1))} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"#fff",fontSize:18,cursor:"pointer",padding:"8px 14px",borderRadius:12,backdropFilter:"blur(8px)"}}>◀</button>
           <span style={{fontWeight:900,fontSize:18}}>{MO_NAMES[m]} {y}</span>
           <button onClick={()=>setCur(new Date(y,m+1,1))} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"#fff",fontSize:18,cursor:"pointer",padding:"8px 14px",borderRadius:12,backdropFilter:"blur(8px)"}}>▶</button>
-          <button onClick={()=>{setSelectedDate(today);setSheet(true);}} style={{background:"#fff",color:"#4F46E5",fontSize:13,fontWeight:700,padding:"8px 12px",borderRadius:12,border:"none",cursor:"pointer"}}>＋ Добавить задачу</button>
         </div>
+        <button onClick={()=>{setSelectedDate(today);setSheet(true);}} style={{background:"rgba(255,255,255,0.18)",color:"#fff",fontSize:14,fontWeight:700,padding:"10px 16px",borderRadius:14,border:"1.5px solid rgba(255,255,255,0.3)",cursor:"pointer",backdropFilter:"blur(8px)",display:"flex",alignItems:"center",gap:6}}>
+          <span style={{fontSize:16}}>＋</span> Добавить задачу
+        </button>
       </div>
 
       <div style={{display:"flex",gap:8,marginBottom:12}}>
@@ -791,32 +793,40 @@ function CalView({goals,calTasks,setCalTasks}) {
 
       {/* Tasks for today, tomorrow, etc. */}
       <div style={{fontWeight:900,fontSize:16,marginBottom:12}}>📅 Задачи на ближайшие дни</div>
-      {["today","tomorrow","dayAfter"].map((key,i)=>{
-        const d=new Date(); d.setDate(d.getDate()+i);
-        const dk=dateKey(d);
-        const tasks=tasksByDate[dk]||[];
-        return (
-          <div key={key} style={{marginBottom:16}}>
-            <div style={{fontSize:14,fontWeight:700,color:"#64748B",marginBottom:8}}>{i===0?"Сегодня":i===1?"Завтра":"Послезавтра"} ({fmtDate(d)})</div>
-            {tasks.length===0?(
-              <div style={{textAlign:"center",padding:"12px",color:"#CBD5E1",fontSize:13}}>Нет задач</div>
-            ):(
-              <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                {tasks.map(t=>{
-                  return (
-                    <div key={t.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:14,background:"#fff",boxShadow:"0 1px 6px rgba(0,0,0,0.05)"}}>
-                      <div onClick={()=>toggleTask(t.id,t.done)} style={{width:24,height:24,borderRadius:8,border:"2px solid #E2E8F0",background:t.done?"#10B981":"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14,fontWeight:900}}>
-                        {t.done&&"✓"}
+      {(()=>{
+        // Show today + tomorrow always; then any future days that have tasks (up to 7 days ahead)
+        const shownDays=new Set([0,1]);
+        for(let i=2;i<=7;i++){const d2=new Date();d2.setDate(d2.getDate()+i);const dk2=dateKey(d2);if(tasksByDate[dk2]?.length>0)shownDays.add(i);}
+        return Array.from(shownDays).sort((a,b)=>a-b).map(i=>{
+          const d=new Date(); d.setDate(d.getDate()+i);
+          const dk=dateKey(d);
+          const tasks=tasksByDate[dk]||[];
+          const label=i===0?"Сегодня":i===1?"Завтра":`${fmtDate(d)}`;
+          return (
+            <div key={i} style={{marginBottom:14}}>
+              <div style={{fontSize:14,fontWeight:700,color:"#64748B",marginBottom:8}}>{label} {i>=2&&<span style={{fontSize:12,color:"#CBD5E1"}}>({new Date(d).toLocaleDateString("ru-RU",{weekday:"short"})})</span>}</div>
+              {tasks.length===0?(
+                <div style={{textAlign:"center",padding:"10px",color:"#CBD5E1",fontSize:13}}>Нет задач</div>
+              ):(
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  {tasks.map(t=>{
+                    const pr=TPRIO.find(x=>x.id===t.prio)||TPRIO[1];
+                    return (
+                      <div key={t.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:14,background:"#fff",boxShadow:"0 1px 6px rgba(0,0,0,0.05)",borderLeft:`3px solid ${t.done?"#10B981":pr.c}`}}>
+                        <div onClick={()=>toggleTask(t.id,t.done)} style={{width:24,height:24,borderRadius:8,border:`2px solid ${t.done?"#10B981":"#E2E8F0"}`,background:t.done?"#10B981":"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14,fontWeight:900,flexShrink:0}}>
+                          {t.done&&"✓"}
+                        </div>
+                        <span style={{flex:1,fontSize:14,textDecoration:t.done?"line-through":"none",color:t.done?"#94A3B8":"#0F172A"}}>{t.title}</span>
+                        <span style={{fontSize:10,fontWeight:700,color:pr.c,background:pr.c+"18",padding:"2px 7px",borderRadius:6,flexShrink:0}}>{pr.l}</span>
                       </div>
-                      <span style={{flex:1,fontSize:14,textDecoration:t.done?"line-through":"none",color:t.done?"#94A3B8":"#0F172A"}}>{t.title}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        );
-      })}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        });
+      })()}
 
       {sheet&&(
         <Sheet open={sheet} onClose={()=>{setSheet(false);setSelectedDate(null);setNewTask("");}} title={`Добавить задачу на ${selectedDate?fmtDate(selectedDate):""}`}>
@@ -1172,13 +1182,24 @@ export default function App() {
   },[goals,filt,prioFilt,search]);
 
   const tabs=[
-    {id:"goals",  emoji:"🎯",label:"Цели"},
-    {id:"cal",    emoji:"📅",label:"Календарь"},
-    {id:"habits", emoji:"🔄",label:"Привычки"},
-    {id:"wishes", emoji:"💫",label:"Желания"},
-    {id:"deadlines", emoji:"⏰",label:"Дедлайны"},
-    {id:"ideas",  emoji:"💡",label:"Идеи"},
+    {id:"goals",     label:"Цели"},
+    {id:"cal",       label:"Календарь"},
+    {id:"habits",    label:"Привычки"},
+    {id:"wishes",    label:"Желания"},
+    {id:"deadlines", label:"Дедлайны"},
+    {id:"ideas",     label:"Идеи"},
   ];
+  const TabIcon=({id,active})=>{
+    const c=active?"#6366F1":"#94A3B8";
+    const s={width:22,height:22,display:"block"};
+    if(id==="goals") return(<svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={s}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="21" y1="3" x2="15" y2="9"/><line x1="12" y1="8" x2="12" y2="8" strokeWidth="3"/></svg>);
+    if(id==="cal") return(<svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={s}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><path d="M8 14h2v2H8z" fill={c} stroke="none"/></svg>);
+    if(id==="habits") return(<svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={s}><path d="M21 12a9 9 0 1 1-6.219-8.56"/><polyline points="21 3 21 9 15 9"/></svg>);
+    if(id==="wishes") return(<svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={s}><path d="M12 2l2.9 8.26H23l-7 5.13 2.7 8.26L12 18.27l-6.7 5.38L8 15.39 1 10.26h8.1z"/></svg>);
+    if(id==="deadlines") return(<svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={s}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>);
+    if(id==="ideas") return(<svg viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={s}><path d="M9 21h6"/><path d="M12 3a6 6 0 0 1 4 10.6V17H8v-3.4A6 6 0 0 1 12 3z"/></svg>);
+    return null;
+  };
 
   if(!ready) return(
     <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",flexDirection:"column",gap:12,background:"#F8FAFC"}}>
@@ -1266,14 +1287,16 @@ export default function App() {
       </div>
 
       {/* Bottom Nav */}
-      <div className="bottom-nav" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#fff",borderTop:"1px solid #F1F5F9",display:"flex",justifyContent:"space-around",paddingTop:10,zIndex:100,boxShadow:"0 -4px 24px rgba(0,0,0,0.07)"}}>
+      <div className="bottom-nav" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#fff",borderTop:"1px solid #F1F5F9",display:"flex",justifyContent:"space-around",paddingTop:8,zIndex:100,boxShadow:"0 -4px 24px rgba(0,0,0,0.07)"}}>
         {tabs.map(t=>{
           const active=tab===t.id;
           return(
-            <button key={t.id} onClick={()=>setTab(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:active?"#EEF2FF":"none",border:"none",cursor:"pointer",padding:"6px 10px",borderRadius:16,minWidth:0,transition:"background .2s",flex:1}}>
-              <span style={{fontSize:20,filter:active?"none":"grayscale(60%)",opacity:active?1:.5,transform:active?"scale(1.1)":"scale(1)",transition:"all .2s",display:"block"}}>{t.emoji}</span>
-              <span style={{fontSize:10,fontWeight:active?800:600,color:active?"#6366F1":"#94A3B8",transition:"color .2s",whiteSpace:"nowrap"}}>{t.label}</span>
-              {active&&<div style={{width:20,height:3,borderRadius:2,background:"#6366F1",marginTop:1}}/>}
+            <button key={t.id} onClick={()=>setTab(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:"pointer",padding:"4px 6px",borderRadius:14,minWidth:0,transition:"background .2s",flex:1}}>
+              <div style={{width:32,height:32,borderRadius:10,background:active?"#EEF2FF":"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"background .2s"}}>
+                <TabIcon id={t.id} active={active}/>
+              </div>
+              <span style={{fontSize:9,fontWeight:active?800:600,color:active?"#6366F1":"#94A3B8",transition:"color .2s",whiteSpace:"nowrap"}}>{t.label}</span>
+              {active&&<div style={{width:16,height:2.5,borderRadius:2,background:"#6366F1",marginTop:0}}/>}
             </button>
           );
         })}
