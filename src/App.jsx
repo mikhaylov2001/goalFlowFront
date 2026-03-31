@@ -800,7 +800,6 @@ function CalView({goals,calTasks,setCalTasks}) {
       setCalTasks(prev=>prev.map(t=>t.id===tid?{...t,title,prio}:t));
     }catch(e){console.error(e);}
   };
-  };
 
   // Upcoming days: today + tomorrow + any future days with tasks (up to 7 days)
   const upcomingDays=useMemo(()=>{
