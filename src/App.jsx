@@ -97,11 +97,27 @@ const CSS_GLOBAL = `
   input,textarea,select,button { font-family:'Nunito',-apple-system,sans-serif;font-size:16px; }
   input:focus,textarea:focus { border-color:#6366F1 !important; }
   .bottom-nav {
-    padding-bottom: 24px;
-    padding-bottom: env(safe-area-inset-bottom);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 430px;
+    margin: 0 auto;
+    z-index: 100;
+    background: #fff;
+    border-top: 1px solid #F1F5F9;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.07);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .bottom-nav-inner {
+    display: flex;
+    justify-content: space-around;
+    padding: 6px 0 4px;
   }
   .app-wrap {
-    padding-bottom: 100px;
+    min-height: 100dvh;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
 `;
 
@@ -1291,7 +1307,7 @@ export default function App() {
   };
 
   return(
-    <div className="app-wrap" style={{fontFamily:"'Nunito',-apple-system,sans-serif",background:"#F8FAFC",minHeight:"100vh",maxWidth:430,margin:"0 auto",color:"#0F172A"}}>
+    <div className="app-wrap" style={{fontFamily:"'Nunito',-apple-system,sans-serif",background:"#F8FAFC",maxWidth:430,margin:"0 auto",color:"#0F172A"}}>
       <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
       <style>{CSS_GLOBAL}</style>
       <Confetti active={confetti}/>
@@ -1374,8 +1390,8 @@ export default function App() {
       </div>
 
       {/* Bottom Nav */}
-      <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#fff",borderTop:"1px solid #F1F5F9",zIndex:100,boxShadow:"0 -4px 24px rgba(0,0,0,0.07)"}}>
-        <div style={{display:"flex",justifyContent:"space-around",paddingTop:8,paddingBottom:8}}>
+      <nav className="bottom-nav" aria-label="Навигация">
+        <div className="bottom-nav-inner">
           {tabs.map(t=>{
             const active=tab===t.id;
             return(
@@ -1387,8 +1403,7 @@ export default function App() {
             );
           })}
         </div>
-        <div style={{height:"env(safe-area-inset-bottom, 0px)",background:"#fff"}}/>
-      </div>
+      </nav>
 
       <Sheet open={sheet} onClose={()=>{setSheet(false);setEditG(null);}} title={editG?"Редактировать цель":"Новая цель 🎯"}>
         <GoalForm goal={editG} onSave={doSave} onClose={()=>{setSheet(false);setEditG(null);}}/>
