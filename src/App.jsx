@@ -93,7 +93,7 @@ const CSS_GLOBAL = `
   @keyframes pop       { 0%{transform:scale(1)} 50%{transform:scale(1.12)} 100%{transform:scale(1)} }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   ::-webkit-scrollbar { display:none; }
-  html,body { margin:0;padding:0;overscroll-behavior:none;background:#F8FAFC; }
+  html,body { margin:0;padding:0;overscroll-behavior-y:none;background:#F8FAFC; }
   input,textarea,select,button { font-family:'Nunito',-apple-system,sans-serif;font-size:16px; }
   input:focus,textarea:focus { border-color:#6366F1 !important; }
   .bottom-nav {
